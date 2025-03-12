@@ -21,3 +21,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "DailyLife"
 include(":app")
+include(":domain")
+include(":data")
