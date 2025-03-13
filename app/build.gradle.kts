@@ -2,13 +2,11 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("kotlin-kapt")
-    id("com.google.dagger.hilt.android")
 }
 
 android {
     namespace = "com.example.dailylife"
-    compileSdk = 35
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.example.dailylife"
@@ -45,14 +43,6 @@ dependencies {
     // module dependencies
     implementation(project(":data"))
     implementation(project(":domain"))
-
-    // hilt
-    implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
-    implementation(libs.hilt.navigation)
-
-    // navigation compose
-    implementation(libs.navigation.compose)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
