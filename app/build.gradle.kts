@@ -51,6 +51,9 @@ dependencies {
     kapt(libs.hilt.compiler)
     implementation(libs.hilt.navigation)
 
+    // navigation compose
+    implementation(libs.navigation.compose)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

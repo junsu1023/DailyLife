@@ -10,7 +10,12 @@
 
     <!-- My Color -->
     <color name="bone">#FFD9DFC6</color>
-    <color name="alabaster">#FFEFF3EA</color>
     <color name="ivory">#FFFFFDF0</color>
     <color name="blond">#FFFFF2C2</color>
+
+    <color name="alabaster">#FFF1F0E9</color>
+    <color name="gray_asparagus">#FF41644A</color>
+    <color name="forest_green">#FF0D4715</color>
+    <color name="vivid_tangelo">#FFE9762B</color>
+    <color name="light_gray">#FFD3D3D3</color>
 </resources>
