@@ -5,7 +5,9 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.dailylife.ui.screen.InitScreen
+import com.example.dailylife.ui.screen.AccountScreen
+import com.example.dailylife.ui.screen.CalenderScreen
+import com.example.dailylife.ui.screen.TodoScreen
 
 @Composable
 fun DailyLifeNavHost(
@@ -15,19 +17,18 @@ fun DailyLifeNavHost(
     NavHost(
         navController = navController,
         modifier = modifier,
-        startDestination = DailyLifeScreen.Init.name
+        startDestination = DailyLifeScreen.TodoList.name
     ) {
-        val handleClickButton: (Int) -> Unit = {
-            when(it) {
-                0 -> navController.navigate(DailyLifeScreen.Init.name)
-                1 -> navController.navigate(DailyLifeScreen.TodoList.name)
-                2 -> navController.navigate(DailyLifeScreen.Calender.name)
-                3 -> navController.navigate(DailyLifeScreen.AccountBook.name)
-            }
+        composable(DailyLifeScreen.TodoList.name) {
+            TodoScreen()
         }
 
-        composable(DailyLifeScreen.Init.name) {
-            InitScreen(handleClickButton = handleClickButton)
+        composable(DailyLifeScreen.Calender.name) {
+            CalenderScreen()
+        }
+
+        composable(DailyLifeScreen.AccountBook.name) {
+            AccountScreen()
         }
     }
 }
