@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">DailyLife</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="todo_list">Todo</string>
+    <string name="calender">Calender</string>
+    <string name="account_book">Account</string>
 </resources>
