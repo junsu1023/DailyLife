@@ -54,6 +54,12 @@ dependencies {
     // navigation compose
     implementation(libs.navigation.compose)
 
+    // collectAsStateWithLifecycle
+    implementation(libs.lifecycle.runtime)
+
+    // icon-extends
+    implementation(libs.androidx.material.icons.extended)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

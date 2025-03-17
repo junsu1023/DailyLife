@@ -16,12 +16,14 @@ fun DailyLifeApp() {
 
     DailyLifeTheme {
         Scaffold(
-            bottomBar = { BottomNavigationBar(
-                modifier = Modifier,
-                containerColor = colorResource(R.color.alabaster),
-                contentColor = colorResource(R.color.alabaster),
-                navController = navController
-            ) }
+            bottomBar = {
+                BottomNavigationBar(
+                    modifier = Modifier,
+                    containerColor = colorResource(R.color.alabaster),
+                    contentColor = colorResource(R.color.alabaster),
+                    navController = navController
+                )
+            }
         ) {
             DailyLifeNavHost(
                 modifier = Modifier.padding(it),
