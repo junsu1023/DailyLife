@@ -10,9 +10,13 @@ activityCompose = "1.10.1"
 composeBom = "2024.04.01"
 appcompat = "1.7.0"
 material = "1.12.0"
-hilt_version = "2.51.1"
-hilt_navigation = "1.0.0"
-navigation_version = "2.4.2"
+hilt-version = "2.51.1"
+hilt-navigation = "1.0.0"
+navigation-version = "2.8.9"
+room-version = "2.6.1"
+gson-version = "2.8.5"
+ksp-version = "2.0.0-1.0.22"
+lifecycle-runtime = "2.6.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -33,16 +37,32 @@ androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 # Hilt
-hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt_version" }
-hilt-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt_version" }
-hilt-navigation = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hilt_navigation" }
+hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt-version" }
+hilt-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt-version" }
+hilt-navigation = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hilt-navigation" }
 
 # navigation-compose
-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation_version" }
+navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation-version" }
+
+# room
+room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room-version" }
+room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room-version" }
+room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room-version" }
+
+# gson
+gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson-version" }
+
+# collectAsStateWithLifecycle
+lifecycle-runtime = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle-runtime" }
+
+# icon-extends
+androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 android-library = { id = "com.android.library", version.ref = "agp" }
+googleDevToolsKSP = { id = "com.google.devtools.ksp", version.ref = "ksp-version" }
+hilt = {id = "com.google.dagger.hilt.android", version.ref = "hilt-version" }
 

@@ -4,4 +4,13 @@
     <string name="todo_list">Todo</string>
     <string name="calender">Calender</string>
     <string name="account_book">Account</string>
+    <string name="todo_origin">Todo</string>
+    <string name="todo">해야할 일</string>
+    <string name="inprogress">진행 중</string>
+    <string name="complete">완료</string>
+    <string name="add_state">상태 추가</string>
+    <string name="does_not_exist">제목 없음</string>
+    <string name="today">오늘 할 일</string>
+    <string name="future">차후 할 일</string>
+    <string name="today_complete">오늘 완료한 일</string>
 </resources>
