@@ -6,17 +6,17 @@ import com.example.domain.model.TodoModel
 fun TodoModel.convertTodoEntity(): TodoEntity =
     TodoEntity(
         this.id,
-        this.updateDate,
-        this.priority,
-        this.state,
+        this.dueDate,
+        this.isComplete,
+        this.icon,
         this.title
     )
 
 fun TodoEntity.convertTodoModel(): TodoModel =
     TodoModel(
         this.id,
-        this.updateDate,
-        this.priority,
-        this.state,
+        this.dueDate,
+        this.isComplete,
+        this.icon,
         this.title
     )

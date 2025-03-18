@@ -1,10 +1,12 @@
 package com.example.dailylife
 
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.rememberNavController
 import com.example.dailylife.bottombar.BottomNavigationBar
 import com.example.dailylife.navigation.DailyLifeNavHost
@@ -18,7 +20,7 @@ fun DailyLifeApp() {
         Scaffold(
             bottomBar = {
                 BottomNavigationBar(
-                    modifier = Modifier,
+                    modifier = Modifier.height(60.dp),
                     containerColor = colorResource(R.color.alabaster),
                     contentColor = colorResource(R.color.alabaster),
                     navController = navController

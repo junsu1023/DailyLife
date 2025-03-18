@@ -3,6 +3,7 @@ package com.example.dailylife.bottombar
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -18,6 +19,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -58,7 +60,8 @@ fun BottomNavigationBar(
                         ) {
                             Icon(
                                 painter = painterResource(item.icon),
-                                contentDescription = stringResource(item.title)
+                                contentDescription = stringResource(item.title),
+                                modifier = Modifier.size(24.dp)
                             )
 
                             Text(

@@ -12,13 +12,13 @@ interface TodoDao {
     @Query("select * from `todo_list.db`")
     fun getTodoList(): List<TodoEntity>
 
-    @Query("select * from `todo_list.db` where updateDate = datetime('now', 'localtime')")
+    @Query("select * from `todo_list.db` where dueDate = datetime('now', 'localtime')")
     fun getTodayTodoList(): List<TodoEntity>
 
-    @Query("select * from `todo_list.db` where updateDate > datetime('now', 'localtime')")
+    @Query("select * from `todo_list.db` where dueDate > datetime('now', 'localtime')")
     fun getFutureTodoList(): List<TodoEntity>
 
-    @Query("select * from `todo_list.db` where updateDate = datetime('now', 'localtime') and state == 2")
+    @Query("select * from `todo_list.db` where dueDate = datetime('now', 'localtime') and isComplete == 2")
     fun getTodayCompleteTodoList(): List<TodoEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
