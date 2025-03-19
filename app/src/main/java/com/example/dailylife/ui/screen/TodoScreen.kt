@@ -1,13 +1,10 @@
 package com.example.dailylife.ui.screen
 
-import android.util.MutableInt
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.Indication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -52,6 +49,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.dailylife.R
 import com.example.dailylife.component.CheckBox
+import com.example.dailylife.component.IconSelectorContainer
+import com.example.dailylife.component.TodoBottomSheet
 import com.example.dailylife.viewmodel.TodoViewModel
 import com.example.data.entitiy.TodoEntity
 import java.util.Date
@@ -77,11 +76,13 @@ fun TodoScreen(
 ) {
     val density = LocalDensity.current
     var isShowSelectContainer by remember { mutableStateOf(false) }
-    var offset by remember { mutableStateOf(Offset.Zero) }
+    var selectorContainerOffset by remember { mutableStateOf(Offset.Zero) }
     val onClick: (Offset) -> Unit = {
-        offset = it
+        selectorContainerOffset = it
         isShowSelectContainer = true
     }
+
+    var isShowBottomSheet by remember { mutableStateOf(false) }
 
     Box {
         Column(
@@ -102,39 +103,32 @@ fun TodoScreen(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(end = 10.dp, bottom = 20.dp),
-            onClick = {
-                /*
-                TODO
-                바텀 시트 올라오게 하기
-                 */
-            }
+            onClick = { isShowBottomSheet = true }
         )
 
         if(isShowSelectContainer) {
-            val offsetX = with(density) { offset.x.toDp() }
-            val offsetY = with(density) { offset.y.toDp() }
+            val offsetX = with(density) { (selectorContainerOffset.x - 250).toDp() }
+            val offsetY = with(density) { (selectorContainerOffset.y + 10).toDp() }
 
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = { isShowSelectContainer = false }
-                    )
+                    .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = { isShowSelectContainer = false })
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .offset(x = offsetX, y = offsetY)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(50.dp)
-                            .background(Color.Red)
-                    )
+                    IconSelectorContainer()
                 }
             }
+        }
+
+        if(isShowBottomSheet) {
+            TodoBottomSheet(
+                closeSheet = { isShowBottomSheet = false }
+            )
         }
     }
 }
@@ -329,6 +323,7 @@ fun TodoItemArea(
                 /*
                 TODO
                 viewModel - 체크 시 로직 추가
+                isComplete 상태 변경
                  */
             }
         )
