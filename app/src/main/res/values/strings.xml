@@ -13,4 +13,6 @@
     <string name="today">오늘 할 일</string>
     <string name="future">차후 할 일</string>
     <string name="today_complete">오늘 완료한 일</string>
+    <string name="select_icon">아이콘</string>
+    <string name="input_new_job">새로운 작업을 입력하세요.</string>
 </resources>

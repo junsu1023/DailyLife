@@ -20,7 +20,7 @@ fun DailyLifeApp() {
         Scaffold(
             bottomBar = {
                 BottomNavigationBar(
-                    modifier = Modifier.height(60.dp),
+                    modifier = Modifier.height(100.dp),
                     containerColor = colorResource(R.color.alabaster),
                     contentColor = colorResource(R.color.alabaster),
                     navController = navController
