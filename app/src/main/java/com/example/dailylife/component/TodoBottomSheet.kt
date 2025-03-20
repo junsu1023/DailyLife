@@ -1,32 +1,20 @@
 package com.example.dailylife.component
 
-import android.view.ViewTreeObserver
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.drawable.Drawable
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.ModalBottomSheetDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,22 +26,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import com.example.dailylife.R
+import com.example.data.entitiy.TodoEntity
 import kotlinx.coroutines.delay
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodoBottomSheet(
     modifier: Modifier = Modifier,
-    closeSheet: () -> Unit
+    closeSheet: () -> Unit,
+    onSaveTodo: (TodoEntity) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+    val context = LocalContext.current
 
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
@@ -94,17 +87,43 @@ fun TodoBottomSheet(
                     .align(Alignment.End)
                     .size(40.dp)
                     .padding(end = 10.dp)
-                    .clickable(
-                        enabled = true,
-                        onClick = {
-                            closeSheet()
-                            /*
-                            TODO
-                            TodoList에 추가하기
-                             */
-                        }
-                    )
+                    .clickable(enabled = true, onClick = {
+                        closeSheet()
+                        onSaveTodo(
+                            makeTodoItem(
+                                context, text
+                            )
+                        )
+                    })
             )
         }
     }
+}
+
+private fun makeTodoItem(
+    context: Context,
+    title: String
+): TodoEntity {
+    val curTime = System.currentTimeMillis()
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.KOREAN)
+    val dueDate = dateFormat.format(curTime)
+
+    return TodoEntity(
+        dueDate = dueDate,
+        isComplete = false,
+        icon = convertSVGToBitMap(context, R.drawable.default_icon),
+        title = title
+    )
+}
+
+private fun convertSVGToBitMap(
+    context: Context,
+    @DrawableRes resId: Int
+): Bitmap {
+    val option = BitmapFactory.Options()
+    option.inPreferredConfig = Bitmap.Config.ARGB_8888
+    val drawable: Drawable = ContextCompat.getDrawable(context, resId)!!
+    val bitmap = Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
+
+    return bitmap
 }

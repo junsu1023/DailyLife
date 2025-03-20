@@ -35,4 +35,11 @@ class TodoRepositoryImpl @Inject constructor(
     } catch (t: Throwable) {
         Result.failure(t)
     }
+
+    override suspend fun updateTodoList(todoModel: TodoModel): Result<Unit> = try {
+        todoDataSource.updateTodoList(todoModel.convertTodoEntity())
+        Result.success(Unit)
+    } catch(t: Throwable) {
+        Result.failure(t)
+    }
 }

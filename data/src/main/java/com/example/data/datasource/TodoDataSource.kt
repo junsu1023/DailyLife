@@ -17,4 +17,6 @@ class TodoDataSource(
     fun addTodoEntity(todoEntity: TodoEntity) = todoListDao.addTodoEntity(todoEntity)
 
     fun deleteTodoEntity(todoEntity: TodoEntity) = todoListDao.deleteTodoEntity(todoEntity)
+
+    fun updateTodoList(todoEntity: TodoEntity) = todoListDao.updateTodoList(todoEntity)
 }
