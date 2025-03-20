@@ -7,6 +7,7 @@ import com.example.domain.usecase.GetFutureTodoListUseCase
 import com.example.domain.usecase.GetTodayCompleteTodoListUseCase
 import com.example.domain.usecase.GetTodayTodoListUseCase
 import com.example.domain.usecase.GetTodoListUseCase
+import com.example.domain.usecase.UpdateTodoListUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -32,4 +33,7 @@ object UseCaseModule {
 
     @Provides
     fun provideDeleteTodoUseCase(todoRepository: TodoRepository) = DeleteTodoUseCase(todoRepository)
+
+    @Provides
+    fun provideUpdateTodoUseCase(todoRepository: TodoRepository) = UpdateTodoListUseCase(todoRepository)
 }

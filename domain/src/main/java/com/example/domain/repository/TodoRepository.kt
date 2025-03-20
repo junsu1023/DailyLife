@@ -14,4 +14,6 @@ interface TodoRepository {
     suspend fun addTodoModel(todoModel: TodoModel): Result<Unit>
 
     suspend fun deleteTodoModel(todoModel: TodoModel): Result<Unit>
+
+    suspend fun updateTodoList(todoModel: TodoModel): Result<Unit>
 }

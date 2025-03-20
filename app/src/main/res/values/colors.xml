@@ -22,4 +22,9 @@
     <color name="platinum">#5FDEE2E6</color>
     <color name="lavender_blush">#5FFFEDFA</color>
     <color name="gray">#FFCED4DA</color>
+    <color name="dark_red">	#8B0000</color>
+    <color name="yellow">#FFFF00</color>
+    <color name="dark_green">#006400</color>
+    <color name="steal_blue">#4682B4</color>
+    <color name ="blue_violet">#8A2BE2</color>
 </resources>
