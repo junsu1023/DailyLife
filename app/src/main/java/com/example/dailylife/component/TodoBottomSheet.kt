@@ -1,9 +1,6 @@
 package com.example.dailylife.component
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.drawable.Drawable
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -31,8 +28,8 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import com.example.dailylife.R
+import com.example.dailylife.util.convertDrawableToBitMap
 import com.example.data.entitiy.TodoEntity
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
@@ -47,8 +44,8 @@ fun TodoBottomSheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val context = LocalContext.current
-
     val focusRequester = remember { FocusRequester() }
+
     LaunchedEffect(Unit) {
         delay(200)
         focusRequester.requestFocus()
@@ -90,9 +87,7 @@ fun TodoBottomSheet(
                     .clickable(enabled = true, onClick = {
                         closeSheet()
                         onSaveTodo(
-                            makeTodoItem(
-                                context, text
-                            )
+                            makeTodoItem(context, R.drawable.default_icon, text)
                         )
                     })
             )
@@ -102,6 +97,7 @@ fun TodoBottomSheet(
 
 private fun makeTodoItem(
     context: Context,
+    @DrawableRes resId: Int,
     title: String
 ): TodoEntity {
     val curTime = System.currentTimeMillis()
@@ -111,19 +107,7 @@ private fun makeTodoItem(
     return TodoEntity(
         dueDate = dueDate,
         isComplete = false,
-        icon = convertSVGToBitMap(context, R.drawable.default_icon),
+        icon = convertDrawableToBitMap(context, resId),
         title = title
     )
-}
-
-private fun convertSVGToBitMap(
-    context: Context,
-    @DrawableRes resId: Int
-): Bitmap {
-    val option = BitmapFactory.Options()
-    option.inPreferredConfig = Bitmap.Config.ARGB_8888
-    val drawable: Drawable = ContextCompat.getDrawable(context, resId)!!
-    val bitmap = Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
-
-    return bitmap
 }

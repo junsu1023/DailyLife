@@ -1,20 +1,16 @@
 package com.example.dailylife.ui.screen
 
-import android.view.MotionEvent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -32,25 +28,22 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.pointerInteropFilter
-import androidx.compose.ui.layout.boundsInParent
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.boundsInRoot
-import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -60,11 +53,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.dailylife.R
 import com.example.dailylife.component.CheckBox
+import com.example.dailylife.component.CheckDeleteDialog
 import com.example.dailylife.component.IconSelectorContainer
 import com.example.dailylife.component.TodoBottomSheet
+import com.example.dailylife.util.convertDrawableToBitMap
 import com.example.dailylife.viewmodel.TodoViewModel
 import com.example.data.entitiy.TodoEntity
-import kotlinx.coroutines.launch
 
 @Composable
 fun TodoScreen(
@@ -76,20 +70,22 @@ fun TodoScreen(
     var topBarHeight by remember { mutableStateOf(0f) }
     var headerHeight by remember { mutableStateOf(0f) }
     var iconSelectorContainerWidth by remember { mutableStateOf(0f) }
-    val onClick: (Offset) -> Unit = {
+    val callBackOffset: (Offset) -> Unit = {
         selectorContainerOffset = it
         isShowSelectContainer = true
     }
-
+    var updateTodoItem by remember { mutableStateOf<TodoEntity?>(null) }
     var isShowBottomSheet by remember { mutableStateOf(false) }
-    val lifecycleScope = rememberCoroutineScope()
+    var isDeleteMode by remember { mutableStateOf(false) }
+    var isShowCheckDeleteDialog by remember { mutableStateOf(false) }
 
     Box {
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
             TodoTopBarArea(
-                callBackTopBarHeight = { topBarHeight = it }
+                callBackTopBarHeight = { topBarHeight = it },
+                executeDeleteMode = { isDeleteMode = !isDeleteMode }
             )
 
             Spacer(modifier = Modifier.height(5.dp))
@@ -97,8 +93,11 @@ fun TodoScreen(
             TodoContentArea(
                 modifier = Modifier.weight(1f),
                 todoViewModel = todoViewModel,
-                onClick = onClick,
-                callBackHeaderHeight = { headerHeight = it }
+                callBackOffset = callBackOffset,
+                isDeleteMode = isDeleteMode,
+                callBackHeaderHeight = { headerHeight = it },
+                callBackTodoItem = { updateTodoItem = it },
+                callBackShowDialogState = { isShowCheckDeleteDialog = true }
             )
         }
 
@@ -128,6 +127,8 @@ fun TodoScreen(
                         .offset(x = offsetX, y = offsetY)
                 ) {
                     IconSelectorContainer(
+                        todoItem = updateTodoItem!!,
+                        todoViewModel = todoViewModel,
                         callBackContainerWidth = { iconSelectorContainerWidth = it }
                     )
                 }
@@ -138,10 +139,21 @@ fun TodoScreen(
             TodoBottomSheet(
                 closeSheet = { isShowBottomSheet = false },
                 onSaveTodo = { todoItem ->
-                    lifecycleScope.launch {
-                        todoViewModel.addTodoList(todoItem)
-                        todoViewModel.refreshTodoList()
-                    }
+                    todoViewModel.addTodoList(todoItem)
+                }
+            )
+        }
+
+        if(isShowCheckDeleteDialog) {
+            CheckDeleteDialog(
+                title = stringResource(R.string.delete_dialog_title),
+                description = stringResource(R.string.delete_dialog_description),
+                onClickCancel = {
+                    isShowCheckDeleteDialog = false
+                },
+                onClickConfirm = {
+                    todoViewModel.deleteTodoList(updateTodoItem!!)
+                    isShowCheckDeleteDialog = false
                 }
             )
         }
@@ -150,36 +162,52 @@ fun TodoScreen(
 
 @Composable
 fun TodoTopBarArea(
-    callBackTopBarHeight: (Float) -> Unit
+    callBackTopBarHeight: (Float) -> Unit,
+    executeDeleteMode: () -> Unit
 ) {
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(50.dp)
             .background(colorResource(R.color.bone))
             .onGloballyPositioned { layoutCoordinates ->
                 callBackTopBarHeight(layoutCoordinates.size.height.toFloat())
-            },
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
+            }
     ) {
+        Row(
+            modifier = Modifier.align(Alignment.Center),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.fighting),
+                contentDescription = null
+            )
+
+            Spacer(modifier = Modifier.width(5.dp))
+
+            Text(
+                text = stringResource(R.string.todo_origin),
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.width(5.dp))
+
+            Icon(
+                painter = painterResource(R.drawable.fighting),
+                contentDescription = null
+            )
+        }
+
         Icon(
-            painter = painterResource(R.drawable.fighting),
-            contentDescription = null
-        )
-
-        Spacer(modifier = Modifier.width(5.dp))
-
-        Text(
-            text = stringResource(R.string.todo_origin),
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(modifier = Modifier.width(5.dp))
-
-        Icon(
-            painter = painterResource(R.drawable.fighting),
-            contentDescription = null
+            painter = painterResource(R.drawable.delete_menu_icon),
+            contentDescription = null,
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = 10.dp)
+                .clickable(
+                    onClick = { executeDeleteMode() }
+                )
         )
     }
 }
@@ -188,16 +216,22 @@ fun TodoTopBarArea(
 fun TodoContentArea(
     modifier: Modifier = Modifier,
     todoViewModel: TodoViewModel,
-    onClick: (Offset) -> Unit,
-    callBackHeaderHeight: (Float) -> Unit
+    callBackOffset: (Offset) -> Unit,
+    isDeleteMode: Boolean,
+    callBackHeaderHeight: (Float) -> Unit,
+    callBackTodoItem: (TodoEntity) -> Unit,
+    callBackShowDialogState: () -> Unit
 ) {
     Box(
         modifier = modifier
     ) {
         TodoListContent(
             todoViewModel = todoViewModel,
-            onClick = onClick,
-            callBackHeaderHeight = callBackHeaderHeight
+            isDeleteMode = isDeleteMode,
+            callBackOffset = callBackOffset,
+            callBackHeaderHeight = callBackHeaderHeight,
+            callBackTodoItem = callBackTodoItem,
+            callBackShowDialogState = callBackShowDialogState
         )
     }
 }
@@ -205,8 +239,11 @@ fun TodoContentArea(
 @Composable
 fun TodoListContent(
     todoViewModel: TodoViewModel,
-    onClick: (Offset) -> Unit,
-    callBackHeaderHeight: (Float) -> Unit
+    isDeleteMode: Boolean,
+    callBackOffset: (Offset) -> Unit,
+    callBackHeaderHeight: (Float) -> Unit,
+    callBackTodoItem: (TodoEntity) -> Unit,
+    callBackShowDialogState: () -> Unit
 ) {
     val todoList by todoViewModel.todoList.collectAsStateWithLifecycle()
     val todayTodoList by todoViewModel.todayTodoList.collectAsStateWithLifecycle()
@@ -219,7 +256,6 @@ fun TodoListContent(
     }
 
     val scrollState = rememberScrollState()
-    val lifecycleScope = rememberCoroutineScope()
 
     if(todayTodoList.isEmpty() && futureTodoList.isEmpty() && todayCompleteTodoList.isEmpty()) {
         Box(
@@ -242,14 +278,14 @@ fun TodoListContent(
                 TodoBundle(
                     state = idx + 1,
                     list = todoListKind[idx],
+                    isDeleteMode = isDeleteMode,
                     updateTodoList = {
-                        lifecycleScope.launch {
-                            todoViewModel.updateTodoList(it)
-                            todoViewModel.refreshTodoList()
-                        }
+                        todoViewModel.updateTodoList(it)
                     },
-                    onClick = onClick,
-                    callBackHeaderHeight = callBackHeaderHeight
+                    callBackOffset = callBackOffset,
+                    callBackHeaderHeight = callBackHeaderHeight,
+                    callBackTodoItem = callBackTodoItem,
+                    callBackShowDialogState = callBackShowDialogState
                 )
             }
         }
@@ -260,9 +296,12 @@ fun TodoListContent(
 fun TodoBundle(
     state: Int,
     list: List<TodoEntity>,
+    isDeleteMode: Boolean,
     updateTodoList: (TodoEntity) -> Unit,
-    onClick: (Offset) -> Unit,
-    callBackHeaderHeight: (Float) -> Unit
+    callBackOffset: (Offset) -> Unit,
+    callBackHeaderHeight: (Float) -> Unit,
+    callBackTodoItem: (TodoEntity) -> Unit,
+    callBackShowDialogState: () -> Unit
 ) {
     TodoListHeader(
         state = state,
@@ -271,8 +310,11 @@ fun TodoBundle(
         list.forEach { todo ->
             TodoItemArea(
                 todoItem = todo,
+                isDeleteMode = isDeleteMode,
                 updateTodoList = updateTodoList,
-                onClick = onClick
+                callBackOffset = callBackOffset,
+                callBackTodoItem = callBackTodoItem,
+                callBackShowDialogState = callBackShowDialogState
             )
 
             Spacer(modifier = Modifier.height(5.dp))
@@ -352,17 +394,27 @@ fun TodoExpandButton(
 @Composable
 fun TodoItemArea(
     todoItem: TodoEntity,
+    isDeleteMode: Boolean,
     updateTodoList: (TodoEntity) -> Unit,
-    onClick: (Offset) -> Unit
+    callBackOffset: (Offset) -> Unit,
+    callBackTodoItem: (TodoEntity) -> Unit,
+    callBackShowDialogState: () -> Unit,
 ) {
     var offset by remember { mutableStateOf(Offset.Zero) }
+    val context = LocalContext.current
+    val bitmapIcon = todoItem.icon ?: convertDrawableToBitMap(context, R.drawable.default_icon)
+    val iconColor = if(todoItem.iconColor == null) LocalContentColor.current else colorResource(todoItem.iconColor!!)
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(50.dp)
             .background(
-                color = colorResource(R.color.gray_asparagus2),
+                color = if (todoItem.isComplete) {
+                    colorResource(R.color.gray_asparagus3)
+                } else {
+                    colorResource(R.color.gray_asparagus2)
+                },
                 shape = RoundedCornerShape(12.dp)
             ),
         verticalAlignment = Alignment.CenterVertically
@@ -385,13 +437,25 @@ fun TodoItemArea(
         Spacer(modifier = Modifier.weight(1f))
 
         Icon(
-            painter = painterResource(R.drawable.default_icon),
+            bitmap = if(isDeleteMode) convertDrawableToBitMap(context, R.drawable.delete_icon)!!.asImageBitmap() else bitmapIcon!!.asImageBitmap(),
             contentDescription = null,
+            tint = if(isDeleteMode) colorResource(R.color.black) else iconColor,
             modifier = Modifier
-                .clickable(
-                    enabled = true,
-                    onClick = {
-                        onClick(offset)
+                .then(
+                    if(isDeleteMode) {
+                        Modifier.clickable(
+                            onClick = {
+                                callBackShowDialogState()
+                                callBackTodoItem(todoItem)
+                            }
+                        )
+                    } else {
+                        Modifier.clickable(
+                            onClick = {
+                                callBackOffset(offset)
+                                callBackTodoItem(todoItem)
+                            }
+                        )
                     }
                 )
                 .onGloballyPositioned { layoutCoordinates ->
@@ -420,14 +484,11 @@ fun AddTodoButtonArea(
         tint = colorResource(R.color.gray_asparagus),
         modifier = modifier
             .background(
-                color = Color.Transparent,
-                shape = CircleShape
+                color = Color.Transparent, shape = CircleShape
             )
             .size(40.dp)
             .clickable(
-                interactionSource = interactionSource,
-                indication = ripple,
-                onClick = onClick
+                interactionSource = interactionSource, indication = ripple, onClick = onClick
             )
     )
 }

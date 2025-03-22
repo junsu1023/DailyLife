@@ -7,5 +7,6 @@ data class TodoModel(
     val dueDate: String,
     val isComplete: Boolean = false,
     val icon: Bitmap? = null,
+    val iconColor: Int? = null,
     val title: String? = null
 )
