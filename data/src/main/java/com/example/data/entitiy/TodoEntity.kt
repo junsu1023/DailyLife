@@ -10,5 +10,6 @@ data class TodoEntity(
     val dueDate: String,
     val isComplete: Boolean = false, // 0 -> 초기값, 1 -> 완료
     val icon: Bitmap? = null,
+    val iconColor: Int? = null,
     val title: String? = null
 )

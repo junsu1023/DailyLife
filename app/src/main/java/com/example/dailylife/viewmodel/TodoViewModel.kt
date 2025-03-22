@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -56,35 +56,37 @@ class TodoViewModel @Inject constructor(
     val updateTodoListContinuationError: LiveData<Throwable> get() = _updateTodoListContinuationError
 
     init {
-        refreshTodoList()
+        viewModelScope.launch(Dispatchers.IO) {
+            refreshTodoList()
+        }
     }
 
-    fun getTodoList() {
-        viewModelScope.launchWithLoading(Dispatchers.IO) {
+    private suspend fun getTodoList() {
+        withContext(Dispatchers.IO) {
             _todoList.update {
                 getAllTodoListUseCase().map { it.convertTodoEntity() }
             }
         }
     }
 
-    fun getTodayTodoList() {
-        viewModelScope.launchWithLoading(Dispatchers.IO) {
+    private suspend fun getTodayTodoList() {
+        withContext(Dispatchers.IO) {
             _todayTodoList.update {
                 getTodayTodoListUseCase().map { it.convertTodoEntity() }
             }
         }
     }
 
-    fun getFutureTodoList() {
-        viewModelScope.launchWithLoading(Dispatchers.IO) {
+    private suspend fun getFutureTodoList() {
+        withContext(Dispatchers.IO) {
             _futureTodoList.update {
                 getFutureTodoListUseCase().map { it.convertTodoEntity()}
             }
         }
     }
 
-    fun getTodayCompleteTodoList() {
-        viewModelScope.launchWithLoading(Dispatchers.IO) {
+    private suspend fun getTodayCompleteTodoList() {
+        withContext(Dispatchers.IO) {
             _todayCompleteTodoList.update {
                 getTodayCompleteTodoListUseCase().map { it.convertTodoEntity() }
             }
@@ -92,46 +94,56 @@ class TodoViewModel @Inject constructor(
     }
 
     fun addTodoList(todoItem: TodoEntity) {
-        viewModelScope.launchWithLoading(Dispatchers.IO) {
-            addTodoUseCase(todoItem.convertTodoModel()).onSuccess {
-                val todoItemList = _todoList.value.toMutableList()
-                todoItemList.remove(todoItem)
-                _todoList.update { todoItemList }
-            }.onFailure {
-                _addTodoItemContinuationError.value = it
-            }
+        viewModelScope.launch(Dispatchers.IO) {
+            launch {
+                addTodoUseCase(todoItem.convertTodoModel()).onSuccess {
+                    val todoItemList = _todoList.value.toMutableList()
+                    todoItemList.remove(todoItem)
+                    _todoList.update { todoItemList }
+                }.onFailure {
+                    _addTodoItemContinuationError.value = it
+                }
+            }.join()
+
+            refreshTodoList()
         }
     }
 
     fun deleteTodoList(todoItem: TodoEntity) {
-        viewModelScope.launchWithLoading(Dispatchers.IO) {
-            deleteTodoUseCase(todoItem.convertTodoModel()).onSuccess {
-                val todoItemList = _todoList.value.toMutableList()
-                todoItemList.remove(todoItem)
+        viewModelScope.launch(Dispatchers.IO) {
+            launch {
+                deleteTodoUseCase(todoItem.convertTodoModel()).onSuccess {
+                    val todoItemList = _todoList.value.toMutableList()
+                    todoItemList.remove(todoItem)
 
-                _todoList.update { todoItemList }
-            }.onFailure {
-                _deleteTodoItemContinuationError.value = it
-            }
+                    _todoList.update { todoItemList }
+                }.onFailure {
+                    _deleteTodoItemContinuationError.value = it
+                }
+            }.join()
+
+            refreshTodoList()
         }
     }
 
     fun updateTodoList(todoItem: TodoEntity) {
-        viewModelScope.launchWithLoading(Dispatchers.IO) {
-            updateTodoListUseCase(todoItem.convertTodoModel()).onSuccess {
-                // 동작 X
-            }.onFailure {
-                _updateTodoListContinuationError.value = it
-            }
+        viewModelScope.launch(Dispatchers.IO) {
+            launch {
+                updateTodoListUseCase(todoItem.convertTodoModel()).onSuccess {
+                    // 동작 X
+                }.onFailure {
+                    _updateTodoListContinuationError.value = it
+                }
+            }.join()
+
+            refreshTodoList()
         }
     }
 
-    fun refreshTodoList() = runBlocking {
-        viewModelScope.launch(Dispatchers.IO) {
-            getTodoList()
-            getTodayTodoList()
-            getFutureTodoList()
-            getTodayCompleteTodoList()
-        }
+    suspend fun refreshTodoList() {
+        getTodoList()
+        getTodayTodoList()
+        getFutureTodoList()
+        getTodayCompleteTodoList()
     }
 }

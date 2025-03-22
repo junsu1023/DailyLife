@@ -9,6 +9,7 @@ fun TodoModel.convertTodoEntity(): TodoEntity =
         this.dueDate,
         this.isComplete,
         this.icon,
+        this.iconColor,
         this.title
     )
 
@@ -18,5 +19,6 @@ fun TodoEntity.convertTodoModel(): TodoModel =
         this.dueDate,
         this.isComplete,
         this.icon,
+        this.iconColor,
         this.title
     )
