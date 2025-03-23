@@ -61,6 +61,7 @@ import com.example.dailylife.component.IconSelectorContainer
 import com.example.dailylife.component.TodoBottomSheet
 import com.example.dailylife.component.TodoSnackBar
 import com.example.dailylife.util.convertDrawableToBitMap
+import com.example.dailylife.util.roundRippleClickable
 import com.example.dailylife.viewmodel.TodoViewModel
 import com.example.data.entitiy.TodoEntity
 import kotlinx.coroutines.flow.collectLatest
@@ -112,7 +113,8 @@ fun TodoScreen(
                 message = when(isShowSnackbar) {
                     1 -> stringResource(R.string.failed_add_todo)
                     2 -> stringResource(R.string.failed_delete_todo)
-                    else -> stringResource(R.string.failed_update_todo)
+                    3 -> stringResource(R.string.failed_update_todo)
+                    else -> stringResource(R.string.blank_text)
                 },
                 changedState = { isShowSnackbar = 0 }
             )
@@ -122,6 +124,7 @@ fun TodoScreen(
             modifier = Modifier.fillMaxSize()
         ) {
             TodoTopBarArea(
+                isDeleteMode = isDeleteMode,
                 callBackTopBarHeight = { topBarHeight = it },
                 executeDeleteMode = { isDeleteMode = !isDeleteMode }
             )
@@ -139,12 +142,14 @@ fun TodoScreen(
             )
         }
 
-        AddTodoButtonArea(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 10.dp, bottom = 20.dp),
-            onClick = { isShowBottomSheet = true }
-        )
+        if(!isDeleteMode) {
+            AddTodoButtonArea(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 10.dp, bottom = 20.dp),
+                onClick = { isShowBottomSheet = true }
+            )
+        }
 
         if(isShowSelectContainer) {
             val offsetX = with(density) { (selectorContainerOffset.x - iconSelectorContainerWidth / 2).toDp() }
@@ -178,7 +183,8 @@ fun TodoScreen(
                 closeSheet = { isShowBottomSheet = false },
                 onSaveTodo = { todoItem ->
                     todoViewModel.addTodoList(todoItem)
-                }
+                },
+                showBlankSnackBar = { isShowSnackbar = 4}
             )
         }
 
@@ -200,6 +206,7 @@ fun TodoScreen(
 
 @Composable
 fun TodoTopBarArea(
+    isDeleteMode: Boolean,
     callBackTopBarHeight: (Float) -> Unit,
     executeDeleteMode: () -> Unit
 ) {
@@ -238,12 +245,13 @@ fun TodoTopBarArea(
         }
 
         Icon(
-            painter = painterResource(R.drawable.delete_menu_icon),
+            painter = if(isDeleteMode) painterResource(R.drawable.add) else painterResource(R.drawable.delete_menu_icon),
             contentDescription = null,
             modifier = Modifier
                 .align(Alignment.CenterEnd)
                 .padding(end = 10.dp)
-                .clickable(
+                .roundRippleClickable(
+                    rippleColor = colorResource(R.color.black),
                     onClick = { executeDeleteMode() }
                 )
         )
@@ -481,14 +489,16 @@ fun TodoItemArea(
             modifier = Modifier
                 .then(
                     if (isDeleteMode) {
-                        Modifier.clickable(
+                        Modifier.roundRippleClickable(
+                            rippleColor = colorResource(R.color.black),
                             onClick = {
                                 callBackShowDialogState()
                                 callBackTodoItem(todoItem)
                             }
                         )
                     } else {
-                        Modifier.clickable(
+                        Modifier.roundRippleClickable(
+                            rippleColor = iconColor,
                             onClick = {
                                 callBackOffset(offset)
                                 callBackTodoItem(todoItem)
@@ -510,12 +520,6 @@ fun AddTodoButtonArea(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val ripple = rememberRipple(
-        bounded = false,
-        color = colorResource(R.color.gray_asparagus)
-    )
-
     Icon(
         painter = painterResource(R.drawable.add_todo),
         contentDescription = null,
@@ -525,8 +529,9 @@ fun AddTodoButtonArea(
                 color = Color.Transparent, shape = CircleShape
             )
             .size(40.dp)
-            .clickable(
-                interactionSource = interactionSource, indication = ripple, onClick = onClick
+            .roundRippleClickable(
+                rippleColor = colorResource(R.color.gray_asparagus),
+                onClick = onClick
             )
     )
 }

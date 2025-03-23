@@ -22,4 +22,5 @@
     <string name="failed_add_todo">추가 실패했습니다.</string>
     <string name="failed_delete_todo">삭제 실패했습니다.</string>
     <string name="failed_update_todo">업데이트 실패했습니다.</string>
+    <string name="blank_text">입력창이 비어있습니다.</string>
 </resources>

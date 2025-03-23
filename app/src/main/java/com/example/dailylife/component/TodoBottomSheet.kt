@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -40,7 +41,8 @@ import java.util.Locale
 fun TodoBottomSheet(
     modifier: Modifier = Modifier,
     closeSheet: () -> Unit,
-    onSaveTodo: (TodoEntity) -> Unit
+    onSaveTodo: (TodoEntity) -> Unit,
+    showBlankSnackBar: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val context = LocalContext.current
@@ -76,21 +78,38 @@ fun TodoBottomSheet(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            Icon(
-                painter = painterResource(R.drawable.check_icon),
-                contentDescription = null,
-                tint = colorResource(R.color.forest_green),
-                modifier = Modifier
-                    .align(Alignment.End)
-                    .size(40.dp)
-                    .padding(end = 10.dp)
-                    .clickable(enabled = true, onClick = {
-                        closeSheet()
-                        onSaveTodo(
-                            makeTodoItem(context, R.drawable.default_icon, text)
+            Row {
+                Icon(
+                    painter = painterResource(R.drawable.calender_icon),
+                    contentDescription = null,
+                    tint = colorResource(R.color.gray_asparagus3),
+                    modifier = Modifier
+                        .size(40.dp)
+                        .padding(start = 20.dp)
+                )
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Icon(
+                    painter = painterResource(R.drawable.check_icon),
+                    contentDescription = null,
+                    tint = colorResource(R.color.forest_green),
+                    modifier = Modifier
+                        .size(40.dp)
+                        .padding(end = 10.dp)
+                        .clickable(
+                            enabled = true,
+                            onClick = {
+                                closeSheet()
+                                if(text.isEmpty()) {
+                                    showBlankSnackBar()
+                                } else {
+                                    onSaveTodo(makeTodoItem(context, R.drawable.default_icon, text))
+                                }
+                            }
                         )
-                    })
-            )
+                )
+            }
         }
     }
 }
