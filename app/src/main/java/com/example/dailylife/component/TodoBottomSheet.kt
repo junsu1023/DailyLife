@@ -2,7 +2,6 @@ package com.example.dailylife.component
 
 import android.content.Context
 import androidx.annotation.DrawableRes
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,7 +19,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -31,6 +29,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.dailylife.R
 import com.example.dailylife.util.convertDrawableToBitMap
+import com.example.dailylife.util.roundRippleClickable
+import com.example.dailylife.viewmodel.TodoViewModel
 import com.example.data.entitiy.TodoEntity
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
@@ -40,6 +40,7 @@ import java.util.Locale
 @Composable
 fun TodoBottomSheet(
     modifier: Modifier = Modifier,
+    todoViewModel: TodoViewModel,
     closeSheet: () -> Unit,
     onSaveTodo: (TodoEntity) -> Unit,
     showBlankSnackBar: () -> Unit
@@ -86,6 +87,10 @@ fun TodoBottomSheet(
                     modifier = Modifier
                         .size(40.dp)
                         .padding(start = 20.dp)
+                        .roundRippleClickable(
+                            rippleColor = colorResource(R.color.gray_asparagus3),
+                            onClick = { todoViewModel.showTodoDateDialog() }
+                        )
                 )
 
                 Spacer(modifier = Modifier.weight(1f))
@@ -97,14 +102,14 @@ fun TodoBottomSheet(
                     modifier = Modifier
                         .size(40.dp)
                         .padding(end = 10.dp)
-                        .clickable(
-                            enabled = true,
+                        .roundRippleClickable(
+                            rippleColor = colorResource(R.color.forest_green),
                             onClick = {
                                 closeSheet()
                                 if(text.isEmpty()) {
                                     showBlankSnackBar()
                                 } else {
-                                    onSaveTodo(makeTodoItem(context, R.drawable.default_icon, text))
+                                    onSaveTodo(makeTodoItem(context, R.drawable.default_icon, text, todoViewModel.todoDialogState.value.selectedDate))
                                 }
                             }
                         )
@@ -117,14 +122,15 @@ fun TodoBottomSheet(
 private fun makeTodoItem(
     context: Context,
     @DrawableRes resId: Int,
-    title: String
+    title: String,
+    dueDate: String?
 ): TodoEntity {
     val curTime = System.currentTimeMillis()
-    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.KOREAN)
-    val dueDate = dateFormat.format(curTime)
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    val date = dueDate ?: dateFormat.format(curTime)
 
     return TodoEntity(
-        dueDate = dueDate,
+        dueDate = date,
         isComplete = false,
         icon = convertDrawableToBitMap(context, resId),
         title = title

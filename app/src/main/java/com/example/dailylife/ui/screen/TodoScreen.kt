@@ -26,12 +26,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -59,6 +57,7 @@ import com.example.dailylife.component.CheckBox
 import com.example.dailylife.component.CheckDeleteDialog
 import com.example.dailylife.component.IconSelectorContainer
 import com.example.dailylife.component.TodoBottomSheet
+import com.example.dailylife.component.TodoDatePickerDialog
 import com.example.dailylife.component.TodoSnackBar
 import com.example.dailylife.util.convertDrawableToBitMap
 import com.example.dailylife.util.roundRippleClickable
@@ -72,21 +71,27 @@ fun TodoScreen(
     todoViewModel: TodoViewModel
 ) {
     val density = LocalDensity.current
+    val scope = rememberCoroutineScope()
+
+    // show component state
     var isShowSelectContainer by remember { mutableStateOf(false) }
+    var isShowCheckDeleteDialog by remember { mutableStateOf(false) }
+    var isShowSnackbar by remember { mutableStateOf(0) }
+    var isShowBottomSheet by remember { mutableStateOf(false) }
+
+    // get size state
     var selectorContainerOffset by remember { mutableStateOf(Offset.Zero) }
     var topBarHeight by remember { mutableStateOf(0f) }
     var headerHeight by remember { mutableStateOf(0f) }
     var iconSelectorContainerWidth by remember { mutableStateOf(0f) }
+
+    val todoDialogState by todoViewModel.todoDialogState.collectAsStateWithLifecycle()
+    var updateTodoItem by remember { mutableStateOf<TodoEntity?>(null) }
+    var isDeleteMode by remember { mutableStateOf(false) }
     val callBackOffset: (Offset) -> Unit = {
         selectorContainerOffset = it
         isShowSelectContainer = true
     }
-    var updateTodoItem by remember { mutableStateOf<TodoEntity?>(null) }
-    var isShowBottomSheet by remember { mutableStateOf(false) }
-    var isDeleteMode by remember { mutableStateOf(false) }
-    var isShowCheckDeleteDialog by remember { mutableStateOf(false) }
-    var isShowSnackbar by remember { mutableStateOf(0) }
-    val scope = rememberCoroutineScope()
 
     SideEffect {
         scope.launch {
@@ -180,11 +185,12 @@ fun TodoScreen(
 
         if(isShowBottomSheet) {
             TodoBottomSheet(
+                todoViewModel = todoViewModel,
                 closeSheet = { isShowBottomSheet = false },
                 onSaveTodo = { todoItem ->
                     todoViewModel.addTodoList(todoItem)
                 },
-                showBlankSnackBar = { isShowSnackbar = 4}
+                showBlankSnackBar = { isShowSnackbar = 4 },
             )
         }
 
@@ -199,6 +205,19 @@ fun TodoScreen(
                     todoViewModel.deleteTodoList(updateTodoItem!!)
                     isShowCheckDeleteDialog = false
                 }
+            )
+        }
+
+        if(todoDialogState.isShowDialog) {
+            TodoDatePickerDialog(
+                selectedDate = todoDialogState.selectedDate,
+                onClickConfirm = { date ->
+                    with(todoViewModel) {
+                        hiddenTodoDateDialog()
+                        updateTodoDate(date)
+                    }
+                },
+                onClickCancel = { todoViewModel.hiddenTodoDateDialog() }
             )
         }
     }

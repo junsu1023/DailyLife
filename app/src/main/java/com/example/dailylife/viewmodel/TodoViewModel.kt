@@ -2,6 +2,7 @@ package com.example.dailylife.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.dailylife.state.TodoDatePickerState
 import com.example.data.entitiy.TodoEntity
 import com.example.data.mapper.convertTodoEntity
 import com.example.data.mapper.convertTodoModel
@@ -55,6 +56,9 @@ class TodoViewModel @Inject constructor(
 
     private val _updateTodoItemContinuationError = MutableSharedFlow<Throwable>()
     val updateTodoListContinuationError: SharedFlow<Throwable> get() = _updateTodoItemContinuationError.asSharedFlow()
+
+    private val _todoDialogState = MutableStateFlow(TodoDatePickerState())
+    val todoDialogState: StateFlow<TodoDatePickerState> get() = _todoDialogState.asStateFlow()
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
@@ -146,5 +150,23 @@ class TodoViewModel @Inject constructor(
         getTodayTodoList()
         getFutureTodoList()
         getTodayCompleteTodoList()
+    }
+
+    fun showTodoDateDialog() {
+        _todoDialogState.update { dialogState ->
+            dialogState.copy(isShowDialog = true)
+        }
+    }
+
+    fun hiddenTodoDateDialog() {
+        _todoDialogState.update { dialogState ->
+            dialogState.copy(isShowDialog = false)
+        }
+    }
+
+    fun updateTodoDate(dueDate: String) {
+        _todoDialogState.update { dialogState ->
+            dialogState.copy(selectedDate = dueDate)
+        }
     }
 }
