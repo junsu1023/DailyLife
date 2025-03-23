@@ -74,6 +74,7 @@ fun TodoBottomSheet(
                 text = text,
                 onValueChanged = { text = it },
                 placeholderText = stringResource(R.string.input_new_job),
+                backgroundColor = colorResource(R.color.light_gray),
                 singleLine = true
             )
 

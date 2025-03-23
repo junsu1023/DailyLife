@@ -40,6 +40,7 @@ fun TextField(
     onValueChanged: (String) -> Unit,
     modifier: Modifier = Modifier,
     placeholderText: String = "",
+    backgroundColor: Color,
     singleLine: Boolean = true,
     keyboardOptions: KeyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
     keyboardActions: KeyboardActions = KeyboardActions(),
@@ -47,7 +48,6 @@ fun TextField(
     contentPadding: PaddingValues = PaddingValues(start = 20.dp, end = 15.dp, top = 4.dp,bottom = 4.dp)
 ) {
     val shape = RoundedCornerShape(50)
-    val backgroundColor = colorResource(R.color.light_gray)
     val textColor = Color.Black
 
     BasicTextField(

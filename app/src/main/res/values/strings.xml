@@ -15,6 +15,7 @@
     <string name="today_complete">오늘 완료한 일</string>
     <string name="select_icon">아이콘</string>
     <string name="input_new_job">새로운 작업을 입력하세요.</string>
+    <string name="input_edit_job">변경할 작업을 입력하세요.</string>
     <string name="cancel">취소</string>
     <string name="delete">삭제</string>
     <string name="ok">확인</string>
@@ -24,4 +25,5 @@
     <string name="failed_delete_todo">삭제 실패했습니다.</string>
     <string name="failed_update_todo">업데이트 실패했습니다.</string>
     <string name="blank_text">입력창이 비어있습니다.</string>
+    <string name="due_date">마감일</string>
 </resources>

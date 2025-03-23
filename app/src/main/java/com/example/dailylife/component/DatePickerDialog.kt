@@ -1,16 +1,11 @@
 package com.example.dailylife.component
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
@@ -26,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.dailylife.R
 import com.example.dailylife.util.roundRippleClickable
+import com.example.dailylife.viewmodel.TodoViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -35,6 +31,7 @@ import java.util.TimeZone
 @Composable
 fun TodoDatePickerDialog(
     selectedDate: String?,
+    todoViewModel: TodoViewModel,
     onClickCancel: () -> Unit,
     onClickConfirm: (String) -> Unit
 ) {
@@ -90,6 +87,7 @@ fun TodoDatePickerDialog(
                             ).format(Date(selectedDateMillis))
 
                             onClickConfirm(date)
+                            todoViewModel.setSelectedDate(date)
                         }
                     }
                 )

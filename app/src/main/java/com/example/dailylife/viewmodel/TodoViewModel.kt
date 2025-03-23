@@ -60,6 +60,9 @@ class TodoViewModel @Inject constructor(
     private val _todoDialogState = MutableStateFlow(TodoDatePickerState())
     val todoDialogState: StateFlow<TodoDatePickerState> get() = _todoDialogState.asStateFlow()
 
+    private val _selectedDate = MutableSharedFlow<String>()
+    val selectedDate: SharedFlow<String> get() = _selectedDate
+
     init {
         viewModelScope.launch(Dispatchers.IO) {
             refreshTodoList()
@@ -167,6 +170,12 @@ class TodoViewModel @Inject constructor(
     fun updateTodoDate(dueDate: String) {
         _todoDialogState.update { dialogState ->
             dialogState.copy(selectedDate = dueDate)
+        }
+    }
+
+    fun setSelectedDate(date: String) {
+        viewModelScope.launch {
+            _selectedDate.emit(date)
         }
     }
 }
