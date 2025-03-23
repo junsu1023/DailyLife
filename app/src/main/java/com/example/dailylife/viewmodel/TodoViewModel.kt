@@ -1,9 +1,7 @@
 package com.example.dailylife.viewmodel
 
-import androidx.lifecycle.LiveData
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.dailylife.util.BaseViewModel
-import com.example.dailylife.util.SingleLiveEvent
 import com.example.data.entitiy.TodoEntity
 import com.example.data.mapper.convertTodoEntity
 import com.example.data.mapper.convertTodoModel
@@ -16,8 +14,11 @@ import com.example.domain.usecase.GetTodoListUseCase
 import com.example.domain.usecase.UpdateTodoListUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -33,7 +34,7 @@ class TodoViewModel @Inject constructor(
     private val addTodoUseCase: AddTodoUseCase,
     private val deleteTodoUseCase: DeleteTodoUseCase,
     private val updateTodoListUseCase: UpdateTodoListUseCase
-): BaseViewModel() {
+): ViewModel() {
     private val _todoList = MutableStateFlow<List<TodoEntity>>(emptyList())
     val todoList: StateFlow<List<TodoEntity>> get() = _todoList.asStateFlow()
 
@@ -46,14 +47,14 @@ class TodoViewModel @Inject constructor(
     private val _todayCompleteTodoList = MutableStateFlow<List<TodoEntity>>(emptyList())
     val todayCompleteTodoList: StateFlow<List<TodoEntity>> get() = _todayCompleteTodoList.asStateFlow()
 
-    private val _addTodoItemContinuationError = SingleLiveEvent<Throwable>()
-    val addTodoItemContinuationError: LiveData<Throwable> get() = _addTodoItemContinuationError
+    private val _addTodoItemContinuationError = MutableSharedFlow<Throwable>()
+    val addTodoItemContinuationError: SharedFlow<Throwable> get() = _addTodoItemContinuationError.asSharedFlow()
 
-    private val _deleteTodoItemContinuationError = SingleLiveEvent<Throwable>()
-    val deleteTodoItemContinuationError: LiveData<Throwable> get() = _deleteTodoItemContinuationError
+    private val _deleteTodoItemContinuationError = MutableSharedFlow<Throwable>()
+    val deleteTodoItemContinuationError: SharedFlow<Throwable> get() = _deleteTodoItemContinuationError.asSharedFlow()
 
-    private val _updateTodoListContinuationError = SingleLiveEvent<Throwable>()
-    val updateTodoListContinuationError: LiveData<Throwable> get() = _updateTodoListContinuationError
+    private val _updateTodoItemContinuationError = MutableSharedFlow<Throwable>()
+    val updateTodoListContinuationError: SharedFlow<Throwable> get() = _updateTodoItemContinuationError.asSharedFlow()
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
@@ -101,7 +102,7 @@ class TodoViewModel @Inject constructor(
                     todoItemList.remove(todoItem)
                     _todoList.update { todoItemList }
                 }.onFailure {
-                    _addTodoItemContinuationError.value = it
+                    _addTodoItemContinuationError.emit(it)
                 }
             }.join()
 
@@ -118,7 +119,7 @@ class TodoViewModel @Inject constructor(
 
                     _todoList.update { todoItemList }
                 }.onFailure {
-                    _deleteTodoItemContinuationError.value = it
+                    _deleteTodoItemContinuationError.emit(it)
                 }
             }.join()
 
@@ -130,9 +131,9 @@ class TodoViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             launch {
                 updateTodoListUseCase(todoItem.convertTodoModel()).onSuccess {
-                    // 동작 X
+
                 }.onFailure {
-                    _updateTodoListContinuationError.value = it
+                    _updateTodoItemContinuationError.emit(it)
                 }
             }.join()
 

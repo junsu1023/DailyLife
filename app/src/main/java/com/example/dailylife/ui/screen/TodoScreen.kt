@@ -31,10 +31,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,9 +59,12 @@ import com.example.dailylife.component.CheckBox
 import com.example.dailylife.component.CheckDeleteDialog
 import com.example.dailylife.component.IconSelectorContainer
 import com.example.dailylife.component.TodoBottomSheet
+import com.example.dailylife.component.TodoSnackBar
 import com.example.dailylife.util.convertDrawableToBitMap
 import com.example.dailylife.viewmodel.TodoViewModel
 import com.example.data.entitiy.TodoEntity
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 @Composable
 fun TodoScreen(
@@ -78,8 +84,40 @@ fun TodoScreen(
     var isShowBottomSheet by remember { mutableStateOf(false) }
     var isDeleteMode by remember { mutableStateOf(false) }
     var isShowCheckDeleteDialog by remember { mutableStateOf(false) }
+    var isShowSnackbar by remember { mutableStateOf(0) }
+    val scope = rememberCoroutineScope()
+
+    SideEffect {
+        scope.launch {
+            with(todoViewModel) {
+                addTodoItemContinuationError.collectLatest {
+                    isShowSnackbar = 1
+                }
+
+                deleteTodoItemContinuationError.collectLatest {
+                    isShowSnackbar = 2
+                }
+
+                updateTodoListContinuationError.collectLatest {
+                    isShowSnackbar = 3
+                }
+            }
+        }
+    }
 
     Box {
+        if(isShowSnackbar != 0) {
+            TodoSnackBar(
+                modifier = Modifier.align(Alignment.BottomCenter),
+                message = when(isShowSnackbar) {
+                    1 -> stringResource(R.string.failed_add_todo)
+                    2 -> stringResource(R.string.failed_delete_todo)
+                    else -> stringResource(R.string.failed_update_todo)
+                },
+                changedState = { isShowSnackbar = 0 }
+            )
+        }
+
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -442,7 +480,7 @@ fun TodoItemArea(
             tint = if(isDeleteMode) colorResource(R.color.black) else iconColor,
             modifier = Modifier
                 .then(
-                    if(isDeleteMode) {
+                    if (isDeleteMode) {
                         Modifier.clickable(
                             onClick = {
                                 callBackShowDialogState()
