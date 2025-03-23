@@ -88,7 +88,6 @@ fun TodoScreen(
     val todoDialogState by todoViewModel.todoDialogState.collectAsStateWithLifecycle()
     var updateTodoItem by remember { mutableStateOf<TodoEntity?>(null) }
     var isDeleteMode by remember { mutableStateOf(false) }
-    var selectedDate by remember { mutableStateOf<String?>(null) }
     val callBackOffset: (Offset) -> Unit = {
         selectorContainerOffset = it
         isShowSelectContainer = true
