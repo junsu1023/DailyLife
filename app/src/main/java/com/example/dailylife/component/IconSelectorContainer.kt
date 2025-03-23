@@ -66,7 +66,6 @@ fun IconSelectorContainer(
             )
             .onGloballyPositioned { layoutCoordinates ->
                 val width = layoutCoordinates.size.width.toFloat()
-                println("test-kjs: width = $width")
                 callBackContainerWidth(width)
             }
     ) {
