@@ -1,4 +1,4 @@
-package com.example.dailylife.ui.screen
+package com.example.dailylife.ui.screen.todo
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
@@ -78,6 +78,7 @@ fun TodoScreen(
     var isShowCheckDeleteDialog by remember { mutableStateOf(false) }
     var isShowSnackbar by remember { mutableStateOf(0) }
     var isShowBottomSheet by remember { mutableStateOf(false) }
+    var isShowTodoEditScreen by remember { mutableStateOf(false) }
 
     // get size state
     var selectorContainerOffset by remember { mutableStateOf(Offset.Zero) }
@@ -143,7 +144,8 @@ fun TodoScreen(
                 isDeleteMode = isDeleteMode,
                 callBackHeaderHeight = { headerHeight = it },
                 callBackTodoItem = { updateTodoItem = it },
-                callBackShowDialogState = { isShowCheckDeleteDialog = true }
+                callBackShowDialogState = { isShowCheckDeleteDialog = true },
+                showTodoEditScreen = { isShowTodoEditScreen = true }
             )
         }
 
@@ -211,6 +213,7 @@ fun TodoScreen(
         if(todoDialogState.isShowDialog) {
             TodoDatePickerDialog(
                 selectedDate = todoDialogState.selectedDate,
+                todoViewModel = todoViewModel,
                 onClickConfirm = { date ->
                     with(todoViewModel) {
                         hiddenTodoDateDialog()
@@ -218,6 +221,15 @@ fun TodoScreen(
                     }
                 },
                 onClickCancel = { todoViewModel.hiddenTodoDateDialog() }
+            )
+        }
+
+        if(isShowTodoEditScreen) {
+            TodoEditScreen(
+                modifier = Modifier.align(Alignment.Center),
+                todoItem = updateTodoItem!!,
+                todoViewModel = todoViewModel,
+                hideTodoEditScreen = { isShowTodoEditScreen = false }
             )
         }
     }
@@ -285,7 +297,8 @@ fun TodoContentArea(
     isDeleteMode: Boolean,
     callBackHeaderHeight: (Float) -> Unit,
     callBackTodoItem: (TodoEntity) -> Unit,
-    callBackShowDialogState: () -> Unit
+    callBackShowDialogState: () -> Unit,
+    showTodoEditScreen: () -> Unit
 ) {
     Box(
         modifier = modifier
@@ -296,7 +309,8 @@ fun TodoContentArea(
             callBackOffset = callBackOffset,
             callBackHeaderHeight = callBackHeaderHeight,
             callBackTodoItem = callBackTodoItem,
-            callBackShowDialogState = callBackShowDialogState
+            callBackShowDialogState = callBackShowDialogState,
+            showTodoEditScreen = showTodoEditScreen
         )
     }
 }
@@ -308,7 +322,8 @@ fun TodoListContent(
     callBackOffset: (Offset) -> Unit,
     callBackHeaderHeight: (Float) -> Unit,
     callBackTodoItem: (TodoEntity) -> Unit,
-    callBackShowDialogState: () -> Unit
+    callBackShowDialogState: () -> Unit,
+    showTodoEditScreen: () -> Unit
 ) {
     val todoList by todoViewModel.todoList.collectAsStateWithLifecycle()
     val todayTodoList by todoViewModel.todayTodoList.collectAsStateWithLifecycle()
@@ -350,7 +365,8 @@ fun TodoListContent(
                     callBackOffset = callBackOffset,
                     callBackHeaderHeight = callBackHeaderHeight,
                     callBackTodoItem = callBackTodoItem,
-                    callBackShowDialogState = callBackShowDialogState
+                    callBackShowDialogState = callBackShowDialogState,
+                    showTodoEditScreen = showTodoEditScreen
                 )
             }
         }
@@ -366,7 +382,8 @@ fun TodoBundle(
     callBackOffset: (Offset) -> Unit,
     callBackHeaderHeight: (Float) -> Unit,
     callBackTodoItem: (TodoEntity) -> Unit,
-    callBackShowDialogState: () -> Unit
+    callBackShowDialogState: () -> Unit,
+    showTodoEditScreen: () -> Unit
 ) {
     TodoListHeader(
         state = state,
@@ -379,7 +396,8 @@ fun TodoBundle(
                 updateTodoList = updateTodoList,
                 callBackOffset = callBackOffset,
                 callBackTodoItem = callBackTodoItem,
-                callBackShowDialogState = callBackShowDialogState
+                callBackShowDialogState = callBackShowDialogState,
+                showTodoEditScreen = showTodoEditScreen
             )
 
             Spacer(modifier = Modifier.height(5.dp))
@@ -464,23 +482,27 @@ fun TodoItemArea(
     callBackOffset: (Offset) -> Unit,
     callBackTodoItem: (TodoEntity) -> Unit,
     callBackShowDialogState: () -> Unit,
+    showTodoEditScreen: () -> Unit
 ) {
     var offset by remember { mutableStateOf(Offset.Zero) }
     val context = LocalContext.current
     val bitmapIcon = todoItem.icon ?: convertDrawableToBitMap(context, R.drawable.default_icon)
     val iconColor = if(todoItem.iconColor == null) LocalContentColor.current else colorResource(todoItem.iconColor!!)
-
+    val backgroundColor = if(todoItem.isComplete) colorResource(R.color.gray_asparagus3) else colorResource(R.color.gray_asparagus2)
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(50.dp)
             .background(
-                color = if (todoItem.isComplete) {
-                    colorResource(R.color.gray_asparagus3)
-                } else {
-                    colorResource(R.color.gray_asparagus2)
-                },
+                color = backgroundColor,
                 shape = RoundedCornerShape(12.dp)
+            )
+            .roundRippleClickable(
+                rippleColor = backgroundColor,
+                onClick = {
+                    showTodoEditScreen()
+                    callBackTodoItem(todoItem)
+                }
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
