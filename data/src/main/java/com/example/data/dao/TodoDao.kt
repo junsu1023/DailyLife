@@ -16,7 +16,7 @@ interface TodoDao {
     @Query("select * from `todo_list.db` where dueDate = date('now', 'localtime') and isComplete == false")
     fun getTodayTodoList(): List<TodoEntity>
 
-    @Query("select * from `todo_list.db` where dueDate > date('now', 'localtime')")
+    @Query("select * from `todo_list.db` where dueDate > date('now', 'localtime') order by dueDate")
     fun getFutureTodoList(): List<TodoEntity>
 
     @Query("select * from `todo_list.db` where dueDate = date('now', 'localtime') and isComplete == true")

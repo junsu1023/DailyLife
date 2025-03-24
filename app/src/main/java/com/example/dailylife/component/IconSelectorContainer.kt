@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,10 +26,12 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.dailylife.R
 import com.example.dailylife.util.convertDrawableToBitMap
+import com.example.dailylife.util.roundRippleClickable
 import com.example.dailylife.viewmodel.TodoViewModel
 import com.example.data.entitiy.TodoEntity
 
@@ -38,7 +39,7 @@ import com.example.data.entitiy.TodoEntity
 fun IconSelectorContainer(
     todoItem: TodoEntity,
     todoViewModel: TodoViewModel,
-    callBackContainerWidth: (Float) -> Unit
+    callBackContainerSize: (IntSize) -> Unit
 ) {
     val iconTint = mutableListOf(
         R.color.dark_red,
@@ -65,8 +66,8 @@ fun IconSelectorContainer(
                 shape = RoundedCornerShape(20)
             )
             .onGloballyPositioned { layoutCoordinates ->
-                val width = layoutCoordinates.size.width.toFloat()
-                callBackContainerWidth(width)
+                val size = layoutCoordinates.size
+                callBackContainerSize(size)
             }
     ) {
         Text(
@@ -136,8 +137,8 @@ fun IconBox(
             tint = colorResource(colorResId),
             modifier = Modifier
                 .size(25.dp)
-                .clickable(
-                    enabled = true,
+                .roundRippleClickable(
+                    rippleColor = colorResource(colorResId),
                     onClick = {
                         val convertBitmap = convertDrawableToBitMap(context, drawableResId)
                         val updateTodoItem = todoItem.copy(

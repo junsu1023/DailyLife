@@ -14,10 +14,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -29,12 +32,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.dailylife.R
 import com.example.dailylife.util.convertDrawableToBitMap
+import com.example.dailylife.util.getToday
 import com.example.dailylife.util.roundRippleClickable
 import com.example.dailylife.viewmodel.TodoViewModel
 import com.example.data.entitiy.TodoEntity
 import kotlinx.coroutines.delay
-import java.text.SimpleDateFormat
-import java.util.Locale
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,9 +49,25 @@ fun TodoBottomSheet(
     onSaveTodo: (TodoEntity) -> Unit,
     showBlankSnackBar: () -> Unit
 ) {
+    val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val context = LocalContext.current
     val focusRequester = remember { FocusRequester() }
+    var selectedDate by remember { mutableStateOf<String?>(null) }
+
+    SideEffect {
+        scope.launch {
+            todoViewModel.selectedDate.collectLatest {
+                selectedDate = it
+            }
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            selectedDate = null
+        }
+    }
 
     LaunchedEffect(Unit) {
         delay(200)
@@ -90,7 +110,13 @@ fun TodoBottomSheet(
                         .padding(start = 20.dp)
                         .roundRippleClickable(
                             rippleColor = colorResource(R.color.gray_asparagus3),
-                            onClick = { todoViewModel.showTodoDateDialog() }
+                            onClick = {
+                                val today = getToday()
+                                val date = selectedDate ?: today
+
+                                todoViewModel.updateTodoDate(date)
+                                todoViewModel.showTodoDateDialog()
+                            }
                         )
                 )
 
@@ -111,6 +137,7 @@ fun TodoBottomSheet(
                                     showBlankSnackBar()
                                 } else {
                                     onSaveTodo(makeTodoItem(context, R.drawable.default_icon, text, todoViewModel.todoDialogState.value.selectedDate))
+                                    todoViewModel.updateTodoDate(getToday())
                                 }
                             }
                         )
@@ -126,12 +153,12 @@ private fun makeTodoItem(
     title: String,
     dueDate: String?
 ): TodoEntity {
-    val curTime = System.currentTimeMillis()
-    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-    val date = dueDate ?: dateFormat.format(curTime)
+    val today = getToday()
+    val date = dueDate ?: today
 
     return TodoEntity(
         dueDate = date,
+        prevDueDate = null,
         isComplete = false,
         icon = convertDrawableToBitMap(context, resId),
         title = title

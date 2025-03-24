@@ -53,7 +53,7 @@ fun CheckDeleteDialog(
                 modifier = Modifier
                     .width(300.dp)
                     .wrapContentHeight()
-                    .background(colorResource(R.color.ivory)),
+                    .background(colorResource(R.color.white)),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(modifier = Modifier.height(40.dp))
@@ -101,7 +101,7 @@ fun CheckDeleteDialog(
                             .weight(1f)
                             .fillMaxHeight(),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = colorResource(R.color.ivory),
+                            containerColor = colorResource(R.color.white),
                             contentColor = colorResource(R.color.dark_red),
                             disabledContainerColor = colorResource(R.color.platinum),
                             disabledContentColor = colorResource(R.color.platinum)
@@ -132,7 +132,7 @@ fun CheckDeleteDialog(
                             .weight(1f)
                             .fillMaxHeight(),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = colorResource(R.color.ivory),
+                            containerColor = colorResource(R.color.white),
                             contentColor = colorResource(R.color.black),
                             disabledContainerColor = colorResource(R.color.platinum),
                             disabledContentColor = colorResource(R.color.platinum)

@@ -88,7 +88,9 @@ class TodoViewModel @Inject constructor(
     private suspend fun getFutureTodoList() {
         withContext(Dispatchers.IO) {
             _futureTodoList.update {
-                getFutureTodoListUseCase().map { it.convertTodoEntity()}
+                getFutureTodoListUseCase()
+                    .map { it.convertTodoEntity() }
+                    .sortedBy { it.dueDate }
             }
         }
     }
@@ -163,7 +165,9 @@ class TodoViewModel @Inject constructor(
 
     fun hiddenTodoDateDialog() {
         _todoDialogState.update { dialogState ->
-            dialogState.copy(isShowDialog = false)
+            dialogState.copy(
+                isShowDialog = false
+            )
         }
     }
 

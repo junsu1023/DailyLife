@@ -1,6 +1,7 @@
 package com.example.dailylife.ui.screen.todo
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -37,7 +38,8 @@ fun TodoEditScreen(
     modifier: Modifier,
     todoItem: TodoEntity,
     todoViewModel: TodoViewModel,
-    hideTodoEditScreen: () -> Unit
+    hideTodoEditScreen: () -> Unit,
+    showBlankSnackBar: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
     var date by remember { mutableStateOf(todoItem.dueDate) }
@@ -91,7 +93,10 @@ fun TodoEditScreen(
                     .padding(start = 20.dp)
                     .roundRippleClickable(
                         rippleColor = colorResource(R.color.gray_asparagus3),
-                        onClick = { todoViewModel.showTodoDateDialog() }
+                        onClick = {
+                            todoViewModel.updateTodoDate(todoItem.dueDate)
+                            todoViewModel.showTodoDateDialog()
+                        }
                     )
             )
 
@@ -100,24 +105,47 @@ fun TodoEditScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        Text(
-            modifier = Modifier
-                .align(Alignment.End)
-                .padding(end = 20.dp)
-                .roundRippleClickable(
-                    rippleColor = colorResource(R.color.black),
-                    onClick = {
-                        hideTodoEditScreen()
-                        todoViewModel.updateTodoList(
-                            todoItem.copy(
-                                title = text,
-                                dueDate = date
-                            )
-                        )
-                    }
-                ),
-            text = stringResource(R.string.ok)
-        )
+
+        Row(
+            modifier = Modifier.padding(end = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Spacer(modifier = Modifier.weight(1f))
+
+            Text(
+                modifier = Modifier
+                    .roundRippleClickable(
+                        rippleColor = colorResource(R.color.black),
+                        onClick = {
+                            hideTodoEditScreen()
+                        }
+                    ),
+                text = stringResource(R.string.cancel)
+            )
+
+            Text(
+                modifier = Modifier
+                    .roundRippleClickable(
+                        rippleColor = colorResource(R.color.black),
+                        onClick = {
+                            if(text.isNullOrEmpty()) {
+                                showBlankSnackBar()
+                            } else {
+                                todoViewModel.updateTodoList(
+                                    todoItem.copy(
+                                        title = text,
+                                        prevDueDate = if(todoItem.dueDate != date) todoItem.dueDate else date,
+                                        dueDate = date
+                                    )
+                                )
+                            }
+
+                            hideTodoEditScreen()
+                        }
+                    ),
+                text = stringResource(R.string.ok)
+            )
+        }
 
         Spacer(modifier = Modifier.height(10.dp))
     }

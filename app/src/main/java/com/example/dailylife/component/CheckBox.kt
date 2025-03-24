@@ -1,18 +1,17 @@
 package com.example.dailylife.component
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.dailylife.R
+import com.example.dailylife.util.roundRippleClickable
 
 @Composable
 fun CheckBox(
@@ -24,9 +23,8 @@ fun CheckBox(
         modifier = modifier
             .size(24.dp)
             .clip(CircleShape)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
+            .roundRippleClickable(
+                rippleColor = colorResource(R.color.black),
                 onClick = { onCheckChanged(!checked) }
             )
     ) {

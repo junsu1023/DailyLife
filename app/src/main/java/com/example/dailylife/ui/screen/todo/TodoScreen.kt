@@ -4,8 +4,6 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,6 +48,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.dailylife.R
@@ -60,6 +59,8 @@ import com.example.dailylife.component.TodoBottomSheet
 import com.example.dailylife.component.TodoDatePickerDialog
 import com.example.dailylife.component.TodoSnackBar
 import com.example.dailylife.util.convertDrawableToBitMap
+import com.example.dailylife.util.getToday
+import com.example.dailylife.util.noRippleClick
 import com.example.dailylife.util.roundRippleClickable
 import com.example.dailylife.viewmodel.TodoViewModel
 import com.example.data.entitiy.TodoEntity
@@ -81,15 +82,16 @@ fun TodoScreen(
     var isShowTodoEditScreen by remember { mutableStateOf(false) }
 
     // get size state
-    var selectorContainerOffset by remember { mutableStateOf(Offset.Zero) }
+    var selectorContainerOffset by remember { mutableStateOf(Pair(Offset.Zero, Offset.Zero)) }
     var topBarHeight by remember { mutableStateOf(0f) }
     var headerHeight by remember { mutableStateOf(0f) }
-    var iconSelectorContainerWidth by remember { mutableStateOf(0f) }
+    var iconSelectorContainerSize by remember { mutableStateOf(IntSize(0, 0)) }
+    var fullSizeHeight by remember { mutableStateOf(0f) }
 
     val todoDialogState by todoViewModel.todoDialogState.collectAsStateWithLifecycle()
     var updateTodoItem by remember { mutableStateOf<TodoEntity?>(null) }
     var isDeleteMode by remember { mutableStateOf(false) }
-    val callBackOffset: (Offset) -> Unit = {
+    val callBackOffset: (Pair<Offset, Offset>) -> Unit = {
         selectorContainerOffset = it
         isShowSelectContainer = true
     }
@@ -112,7 +114,13 @@ fun TodoScreen(
         }
     }
 
-    Box {
+    Box(
+        modifier = Modifier
+            .onGloballyPositioned { layoutCoordinates ->
+                val fullHeight = layoutCoordinates.size.height.toFloat()
+                fullSizeHeight = fullHeight
+            }
+    ) {
         if(isShowSnackbar != 0) {
             TodoSnackBar(
                 modifier = Modifier.align(Alignment.BottomCenter),
@@ -159,15 +167,20 @@ fun TodoScreen(
         }
 
         if(isShowSelectContainer) {
-            val offsetX = with(density) { (selectorContainerOffset.x - iconSelectorContainerWidth / 2).toDp() }
-            val offsetY = with(density) { (selectorContainerOffset.y - topBarHeight + headerHeight).toDp() }
+            val bottomLeftOffset = selectorContainerOffset.first
+            val topLeftOffset = selectorContainerOffset.second
+            val bottomEndOffsetY = (bottomLeftOffset.y - topBarHeight + headerHeight) + iconSelectorContainerSize.height.toFloat()
+
+            val offsetX = with(density) { (bottomLeftOffset.x - iconSelectorContainerSize.width.toFloat() / 2).toDp() }
+            val offsetY = with(density) {
+                if(bottomEndOffsetY >= fullSizeHeight) (topLeftOffset.y - iconSelectorContainerSize.height.toFloat() - headerHeight).toDp()
+                else (bottomLeftOffset.y - topBarHeight + headerHeight).toDp()
+            }
 
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
+                    .noRippleClick(
                         onClick = { isShowSelectContainer = false }
                     )
             ) {
@@ -179,7 +192,7 @@ fun TodoScreen(
                     IconSelectorContainer(
                         todoItem = updateTodoItem!!,
                         todoViewModel = todoViewModel,
-                        callBackContainerWidth = { iconSelectorContainerWidth = it }
+                        callBackContainerSize = { iconSelectorContainerSize = it }
                     )
                 }
             }
@@ -225,12 +238,21 @@ fun TodoScreen(
         }
 
         if(isShowTodoEditScreen) {
-            TodoEditScreen(
-                modifier = Modifier.align(Alignment.Center),
-                todoItem = updateTodoItem!!,
-                todoViewModel = todoViewModel,
-                hideTodoEditScreen = { isShowTodoEditScreen = false }
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .noRippleClick(
+                        onClick = { isShowTodoEditScreen = false }
+                    )
+            ) {
+                TodoEditScreen(
+                    modifier = Modifier.align(Alignment.Center),
+                    todoItem = updateTodoItem!!,
+                    todoViewModel = todoViewModel,
+                    hideTodoEditScreen = { isShowTodoEditScreen = false },
+                    showBlankSnackBar = { isShowSnackbar = 4 }
+                )
+            }
         }
     }
 }
@@ -283,8 +305,7 @@ fun TodoTopBarArea(
                 .padding(end = 10.dp)
                 .roundRippleClickable(
                     rippleColor = colorResource(R.color.black),
-                    onClick = { executeDeleteMode() }
-                )
+                    onClick = { executeDeleteMode() })
         )
     }
 }
@@ -293,7 +314,7 @@ fun TodoTopBarArea(
 fun TodoContentArea(
     modifier: Modifier = Modifier,
     todoViewModel: TodoViewModel,
-    callBackOffset: (Offset) -> Unit,
+    callBackOffset: (Pair<Offset, Offset>) -> Unit,
     isDeleteMode: Boolean,
     callBackHeaderHeight: (Float) -> Unit,
     callBackTodoItem: (TodoEntity) -> Unit,
@@ -319,7 +340,7 @@ fun TodoContentArea(
 fun TodoListContent(
     todoViewModel: TodoViewModel,
     isDeleteMode: Boolean,
-    callBackOffset: (Offset) -> Unit,
+    callBackOffset: (Pair<Offset, Offset>) -> Unit,
     callBackHeaderHeight: (Float) -> Unit,
     callBackTodoItem: (TodoEntity) -> Unit,
     callBackShowDialogState: () -> Unit,
@@ -379,7 +400,7 @@ fun TodoBundle(
     list: List<TodoEntity>,
     isDeleteMode: Boolean,
     updateTodoList: (TodoEntity) -> Unit,
-    callBackOffset: (Offset) -> Unit,
+    callBackOffset: (Pair<Offset, Offset>) -> Unit,
     callBackHeaderHeight: (Float) -> Unit,
     callBackTodoItem: (TodoEntity) -> Unit,
     callBackShowDialogState: () -> Unit,
@@ -391,6 +412,7 @@ fun TodoBundle(
     ) {
         list.forEach { todo ->
             TodoItemArea(
+                todoKind = state,
                 todoItem = todo,
                 isDeleteMode = isDeleteMode,
                 updateTodoList = updateTodoList,
@@ -461,8 +483,8 @@ fun TodoExpandButton(
 ) {
     Box(
         modifier = Modifier
-            .clickable(
-                enabled = true,
+            .roundRippleClickable(
+                rippleColor = colorResource(R.color.black),
                 onClick = onClick
             )
     ) {
@@ -476,19 +498,22 @@ fun TodoExpandButton(
 
 @Composable
 fun TodoItemArea(
+    todoKind: Int,
     todoItem: TodoEntity,
     isDeleteMode: Boolean,
     updateTodoList: (TodoEntity) -> Unit,
-    callBackOffset: (Offset) -> Unit,
+    callBackOffset: (Pair<Offset, Offset>) -> Unit,
     callBackTodoItem: (TodoEntity) -> Unit,
     callBackShowDialogState: () -> Unit,
     showTodoEditScreen: () -> Unit
 ) {
-    var offset by remember { mutableStateOf(Offset.Zero) }
+    var offset by remember { mutableStateOf(Pair(Offset.Zero, Offset.Zero)) }
     val context = LocalContext.current
     val bitmapIcon = todoItem.icon ?: convertDrawableToBitMap(context, R.drawable.default_icon)
     val iconColor = if(todoItem.iconColor == null) LocalContentColor.current else colorResource(todoItem.iconColor!!)
     val backgroundColor = if(todoItem.isComplete) colorResource(R.color.gray_asparagus3) else colorResource(R.color.gray_asparagus2)
+    val today = getToday()
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -511,7 +536,11 @@ fun TodoItemArea(
         CheckBox(
             checked = todoItem.isComplete,
             onCheckChanged = {
-                updateTodoList(todoItem.copy(isComplete = it))
+                when(todoKind) {
+                    2 -> updateTodoList(todoItem.copy(isComplete = it, prevDueDate = todoItem.dueDate, dueDate = today))
+                    3 -> updateTodoList(todoItem.copy(isComplete = it, dueDate = todoItem.prevDueDate ?: today))
+                    else -> updateTodoList(todoItem.copy(isComplete = it, prevDueDate = todoItem.dueDate))
+                }
             }
         )
 
@@ -548,7 +577,9 @@ fun TodoItemArea(
                     }
                 )
                 .onGloballyPositioned { layoutCoordinates ->
-                    offset = layoutCoordinates.boundsInRoot().bottomLeft
+                    val bottomLeft = layoutCoordinates.boundsInRoot().bottomLeft
+                    val topLeft = layoutCoordinates.boundsInRoot().topLeft
+                    offset = Pair(bottomLeft, topLeft)
                 }
         )
 

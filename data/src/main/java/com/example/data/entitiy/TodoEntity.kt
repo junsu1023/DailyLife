@@ -8,6 +8,7 @@ import androidx.room.PrimaryKey
 data class TodoEntity(
     @PrimaryKey(autoGenerate = true) val id: Long? = null,
     val dueDate: String,
+    val prevDueDate: String?,
     val isComplete: Boolean = false, // 0 -> 초기값, 1 -> 완료
     val icon: Bitmap? = null,
     val iconColor: Int? = null,
