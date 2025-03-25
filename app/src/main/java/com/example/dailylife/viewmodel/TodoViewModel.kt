@@ -1,7 +1,8 @@
 package com.example.dailylife.viewmodel
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.core.event.Event
+import com.example.core.viewmodel.BaseViewModel
 import com.example.dailylife.state.TodoDatePickerState
 import com.example.data.entitiy.TodoEntity
 import com.example.data.mapper.convertTodoEntity
@@ -9,9 +10,9 @@ import com.example.data.mapper.convertTodoModel
 import com.example.domain.usecase.AddTodoUseCase
 import com.example.domain.usecase.DeleteTodoUseCase
 import com.example.domain.usecase.GetFutureTodoListUseCase
+import com.example.domain.usecase.GetPrevTodoListUseCase
 import com.example.domain.usecase.GetTodayCompleteTodoListUseCase
 import com.example.domain.usecase.GetTodayTodoListUseCase
-import com.example.domain.usecase.GetTodoListUseCase
 import com.example.domain.usecase.UpdateTodoListUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -23,22 +24,18 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
 class TodoViewModel @Inject constructor(
-    private val getAllTodoListUseCase: GetTodoListUseCase,
     private val getTodayTodoListUseCase: GetTodayTodoListUseCase,
     private val getFutureTodoListUseCase: GetFutureTodoListUseCase,
     private val getTodayCompleteTodoListUseCase: GetTodayCompleteTodoListUseCase,
+    private val getPrevTodoListUseCase: GetPrevTodoListUseCase,
     private val addTodoUseCase: AddTodoUseCase,
     private val deleteTodoUseCase: DeleteTodoUseCase,
     private val updateTodoListUseCase: UpdateTodoListUseCase
-): ViewModel() {
-    private val _todoList = MutableStateFlow<List<TodoEntity>>(emptyList())
-    val todoList: StateFlow<List<TodoEntity>> get() = _todoList.asStateFlow()
-
+): BaseViewModel() {
     private val _todayTodoList = MutableStateFlow<List<TodoEntity>>(emptyList())
     val todayTodoList: StateFlow<List<TodoEntity>> get() = _todayTodoList.asStateFlow()
 
@@ -47,6 +44,9 @@ class TodoViewModel @Inject constructor(
 
     private val _todayCompleteTodoList = MutableStateFlow<List<TodoEntity>>(emptyList())
     val todayCompleteTodoList: StateFlow<List<TodoEntity>> get() = _todayCompleteTodoList.asStateFlow()
+
+    private val _prevTodoList = MutableStateFlow<List<TodoEntity>>(emptyList())
+    val prevTodoList: StateFlow<List<TodoEntity>> get() = _prevTodoList.asStateFlow()
 
     private val _addTodoItemContinuationError = MutableSharedFlow<Throwable>()
     val addTodoItemContinuationError: SharedFlow<Throwable> get() = _addTodoItemContinuationError.asSharedFlow()
@@ -64,29 +64,25 @@ class TodoViewModel @Inject constructor(
     val selectedDate: SharedFlow<String> get() = _selectedDate
 
     init {
+        publishEvent(Event.NeedRefresh)
+    }
+
+    override fun handleEvent(event: Event) {
+        when(event) {
+            Event.NeedRefresh -> refreshTodoList()
+        }
+    }
+
+    private fun getTodayTodoList() {
         viewModelScope.launch(Dispatchers.IO) {
-            refreshTodoList()
-        }
-    }
-
-    private suspend fun getTodoList() {
-        withContext(Dispatchers.IO) {
-            _todoList.update {
-                getAllTodoListUseCase().map { it.convertTodoEntity() }
-            }
-        }
-    }
-
-    private suspend fun getTodayTodoList() {
-        withContext(Dispatchers.IO) {
             _todayTodoList.update {
                 getTodayTodoListUseCase().map { it.convertTodoEntity() }
             }
         }
     }
 
-    private suspend fun getFutureTodoList() {
-        withContext(Dispatchers.IO) {
+    private fun getFutureTodoList() {
+        viewModelScope.launch(Dispatchers.IO) {
             _futureTodoList.update {
                 getFutureTodoListUseCase()
                     .map { it.convertTodoEntity() }
@@ -95,10 +91,18 @@ class TodoViewModel @Inject constructor(
         }
     }
 
-    private suspend fun getTodayCompleteTodoList() {
-        withContext(Dispatchers.IO) {
+    private fun getTodayCompleteTodoList() {
+        viewModelScope.launch(Dispatchers.IO) {
             _todayCompleteTodoList.update {
                 getTodayCompleteTodoListUseCase().map { it.convertTodoEntity() }
+            }
+        }
+    }
+
+    private fun getPrevTodoList() {
+        viewModelScope.launch(Dispatchers.IO) {
+            _prevTodoList.update {
+                getPrevTodoListUseCase().map { it.convertTodoEntity() }
             }
         }
     }
@@ -107,15 +111,13 @@ class TodoViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             launch {
                 addTodoUseCase(todoItem.convertTodoModel()).onSuccess {
-                    val todoItemList = _todoList.value.toMutableList()
-                    todoItemList.remove(todoItem)
-                    _todoList.update { todoItemList }
+
                 }.onFailure {
                     _addTodoItemContinuationError.emit(it)
                 }
-            }.join()
+            }
 
-            refreshTodoList()
+            publishEvent(Event.NeedRefresh)
         }
     }
 
@@ -123,16 +125,13 @@ class TodoViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             launch {
                 deleteTodoUseCase(todoItem.convertTodoModel()).onSuccess {
-                    val todoItemList = _todoList.value.toMutableList()
-                    todoItemList.remove(todoItem)
 
-                    _todoList.update { todoItemList }
                 }.onFailure {
                     _deleteTodoItemContinuationError.emit(it)
                 }
-            }.join()
+            }
 
-            refreshTodoList()
+            publishEvent(Event.NeedRefresh)
         }
     }
 
@@ -144,17 +143,17 @@ class TodoViewModel @Inject constructor(
                 }.onFailure {
                     _updateTodoItemContinuationError.emit(it)
                 }
-            }.join()
+            }
 
-            refreshTodoList()
+            publishEvent(Event.NeedRefresh)
         }
     }
 
-    suspend fun refreshTodoList() {
-        getTodoList()
+    private fun refreshTodoList() {
         getTodayTodoList()
         getFutureTodoList()
         getTodayCompleteTodoList()
+        getPrevTodoList()
     }
 
     fun showTodoDateDialog() {

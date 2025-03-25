@@ -10,9 +10,6 @@ import javax.inject.Inject
 class TodoRepositoryImpl @Inject constructor(
     private val todoDataSource: TodoDataSource
 ): TodoRepository {
-    override suspend fun getTodoList(): List<TodoModel> =
-        todoDataSource.getTodoList().map { it.convertTodoModel() }
-
     override suspend fun getTodayTodoList(): List<TodoModel> =
         todoDataSource.getTodayTodoList().map { it.convertTodoModel() }
 
@@ -21,6 +18,9 @@ class TodoRepositoryImpl @Inject constructor(
 
     override suspend fun getTodayCompleteTodoList(): List<TodoModel> =
         todoDataSource.getTodayCompleteTodoList().map { it.convertTodoModel() }
+
+    override suspend fun getPrevTodoList(): List<TodoModel> =
+        todoDataSource.getPrevTodoList().map { it.convertTodoModel() }
 
     override suspend fun addTodoModel(todoModel: TodoModel): Result<Unit> = try {
         todoDataSource.addTodoEntity(todoModel.convertTodoEntity())
