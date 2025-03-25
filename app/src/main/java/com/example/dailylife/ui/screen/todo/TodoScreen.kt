@@ -31,6 +31,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -58,6 +60,7 @@ import com.example.dailylife.component.IconSelectorContainer
 import com.example.dailylife.component.TodoBottomSheet
 import com.example.dailylife.component.TodoDatePickerDialog
 import com.example.dailylife.component.TodoSnackBar
+import com.example.dailylife.state.TodoState
 import com.example.dailylife.util.convertDrawableToBitMap
 import com.example.dailylife.util.getToday
 import com.example.dailylife.util.noRippleClick
@@ -77,16 +80,16 @@ fun TodoScreen(
     // show component state
     var isShowSelectContainer by remember { mutableStateOf(false) }
     var isShowCheckDeleteDialog by remember { mutableStateOf(false) }
-    var isShowSnackbar by remember { mutableStateOf(0) }
+    var isShowSnackbar by remember { mutableIntStateOf(0) }
     var isShowBottomSheet by remember { mutableStateOf(false) }
     var isShowTodoEditScreen by remember { mutableStateOf(false) }
 
     // get size state
     var selectorContainerOffset by remember { mutableStateOf(Pair(Offset.Zero, Offset.Zero)) }
-    var topBarHeight by remember { mutableStateOf(0f) }
-    var headerHeight by remember { mutableStateOf(0f) }
+    var topBarHeight by remember { mutableFloatStateOf(0f) }
+    var headerHeight by remember { mutableFloatStateOf(0f) }
     var iconSelectorContainerSize by remember { mutableStateOf(IntSize(0, 0)) }
-    var fullSizeHeight by remember { mutableStateOf(0f) }
+    var fullSizeHeight by remember { mutableFloatStateOf(0f) }
 
     val todoDialogState by todoViewModel.todoDialogState.collectAsStateWithLifecycle()
     var updateTodoItem by remember { mutableStateOf<TodoEntity?>(null) }
@@ -346,19 +349,16 @@ fun TodoListContent(
     callBackShowDialogState: () -> Unit,
     showTodoEditScreen: () -> Unit
 ) {
-    val todoList by todoViewModel.todoList.collectAsStateWithLifecycle()
+    val prevTodoList by todoViewModel.prevTodoList.collectAsStateWithLifecycle()
     val todayTodoList by todoViewModel.todayTodoList.collectAsStateWithLifecycle()
     val futureTodoList by todoViewModel.futureTodoList.collectAsStateWithLifecycle()
     val todayCompleteTodoList by todoViewModel.todayCompleteTodoList.collectAsStateWithLifecycle()
-
-    val todoListKind = arrayOf(todayTodoList, futureTodoList, todayCompleteTodoList)
-    LaunchedEffect(todoList, todayTodoList, futureTodoList, todayCompleteTodoList) {
-        todoViewModel.refreshTodoList()
-    }
+    val todoListKind = arrayOf(prevTodoList, todayTodoList, futureTodoList, todayCompleteTodoList)
+    val todoState = arrayOf(TodoState.PREV, TodoState.TODAY, TodoState.FUTURE, TodoState.COMPLETE)
 
     val scrollState = rememberScrollState()
 
-    if(todayTodoList.isEmpty() && futureTodoList.isEmpty() && todayCompleteTodoList.isEmpty()) {
+    if(prevTodoList.isEmpty() && todayTodoList.isEmpty() && futureTodoList.isEmpty() && todayCompleteTodoList.isEmpty()) {
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -374,15 +374,13 @@ fun TodoListContent(
             .fillMaxWidth()
             .verticalScroll(scrollState)
     ) {
-        repeat(3) { idx ->
+        repeat(4) { idx ->
             if (todoListKind[idx].isNotEmpty()) {
                 TodoBundle(
-                    state = idx + 1,
+                    state = todoState[idx],
                     list = todoListKind[idx],
                     isDeleteMode = isDeleteMode,
-                    updateTodoList = {
-                        todoViewModel.updateTodoList(it)
-                    },
+                    updateTodoList = { todoViewModel.updateTodoList(it) },
                     callBackOffset = callBackOffset,
                     callBackHeaderHeight = callBackHeaderHeight,
                     callBackTodoItem = callBackTodoItem,
@@ -396,7 +394,7 @@ fun TodoListContent(
 
 @Composable
 fun TodoBundle(
-    state: Int,
+    state: TodoState,
     list: List<TodoEntity>,
     isDeleteMode: Boolean,
     updateTodoList: (TodoEntity) -> Unit,
@@ -429,7 +427,7 @@ fun TodoBundle(
 
 @Composable
 fun TodoListHeader(
-    state: Int,
+    state: TodoState,
     callBackHeaderHeight: (Float) -> Unit,
     content: @Composable (() -> Unit)
 ) {
@@ -442,7 +440,8 @@ fun TodoListHeader(
             .padding(horizontal = 10.dp)
             .animateContentSize(
                 animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium
+                    dampingRatio = Spring.DampingRatioLowBouncy,
+                    stiffness = Spring.StiffnessLow
                 )
             ),
         verticalArrangement = Arrangement.Center
@@ -456,9 +455,10 @@ fun TodoListHeader(
         ) {
             Text(
                 text = when(state) {
-                    1 -> stringResource(R.string.today)
-                    2 -> stringResource(R.string.future)
-                    else -> stringResource(R.string.today_complete)
+                    TodoState.PREV -> stringResource(R.string.prev)
+                    TodoState.TODAY -> stringResource(R.string.today)
+                    TodoState.FUTURE -> stringResource(R.string.future)
+                    TodoState.COMPLETE -> stringResource(R.string.today_complete)
                 }
             )
 
@@ -498,7 +498,7 @@ fun TodoExpandButton(
 
 @Composable
 fun TodoItemArea(
-    todoKind: Int,
+    todoKind: TodoState,
     todoItem: TodoEntity,
     isDeleteMode: Boolean,
     updateTodoList: (TodoEntity) -> Unit,
@@ -537,9 +537,10 @@ fun TodoItemArea(
             checked = todoItem.isComplete,
             onCheckChanged = {
                 when(todoKind) {
-                    2 -> updateTodoList(todoItem.copy(isComplete = it, prevDueDate = todoItem.dueDate, dueDate = today))
-                    3 -> updateTodoList(todoItem.copy(isComplete = it, dueDate = todoItem.prevDueDate ?: today))
-                    else -> updateTodoList(todoItem.copy(isComplete = it, prevDueDate = todoItem.dueDate))
+                    TodoState.PREV -> updateTodoList(todoItem.copy(isComplete = it, prevDueDate = todoItem.dueDate, dueDate = today))
+                    TodoState.TODAY -> updateTodoList(todoItem.copy(isComplete = it, prevDueDate = todoItem.dueDate))
+                    TodoState.FUTURE -> updateTodoList(todoItem.copy(isComplete = it, prevDueDate = todoItem.dueDate, dueDate = today))
+                    TodoState.COMPLETE -> updateTodoList(todoItem.copy(isComplete = it, dueDate = todoItem.prevDueDate ?: today))
                 }
             }
         )

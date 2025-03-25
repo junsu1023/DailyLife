@@ -10,6 +10,7 @@
     <string name="complete">완료</string>
     <string name="add_state">상태 추가</string>
     <string name="does_not_exist">제목 없음</string>
+    <string name="prev">기간 지남</string>
     <string name="today">오늘 할 일</string>
     <string name="future">차후 할 일</string>
     <string name="today_complete">오늘 완료한 일</string>
