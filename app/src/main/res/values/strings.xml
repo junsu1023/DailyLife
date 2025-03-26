@@ -1,8 +1,10 @@
 <resources>
     <string name="app_name">DailyLife</string>
     <string name="title_activity_main">MainActivity</string>
+
+    <!-- TODO -->
     <string name="todo_list">Todo</string>
-    <string name="calender">Calender</string>
+    <string name="calendar">Calendar</string>
     <string name="account_book">Account</string>
     <string name="todo_origin">Todo</string>
     <string name="todo">해야할 일</string>
@@ -27,4 +29,16 @@
     <string name="failed_update_todo">업데이트 실패했습니다.</string>
     <string name="blank_text">입력창이 비어있습니다.</string>
     <string name="due_date">마감일</string>
+
+    <!-- Calendar -->
+    <string name="sunday">일</string>
+    <string name="monday">월</string>
+    <string name="tuesday">화</string>
+    <string name="wednesday">수</string>
+    <string name="thursday">목</string>
+    <string name="friday">금</string>
+    <string name="saturday">토</string>
+    <string name="year">년</string>
+    <string name="month">월</string>
+    <string name="day">일</string>
 </resources>

@@ -6,7 +6,7 @@ import com.example.dailylife.R
 
 enum class DailyLifeScreen {
     TodoList,
-    Calender,
+    Calendar,
     AccountBook
 }
 
@@ -22,9 +22,9 @@ sealed class DailyLifeItem(
     )
 
     data object Calender: DailyLifeItem(
-        title = R.string.calender,
-        icon = R.drawable.calender_icon,
-        screenRoute = DailyLifeScreen.Calender.name
+        title = R.string.calendar,
+        icon = R.drawable.calendar_icon,
+        screenRoute = DailyLifeScreen.Calendar.name
     )
 
     data object AccountBook: DailyLifeItem(

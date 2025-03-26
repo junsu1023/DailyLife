@@ -37,7 +37,7 @@ fun DailyLifeNavHost(
             )
         }
 
-        composable(DailyLifeScreen.Calender.name) {
+        composable(DailyLifeScreen.Calendar.name) {
             CalenderScreen()
         }
 
