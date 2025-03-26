@@ -102,7 +102,7 @@ fun TodoBottomSheet(
 
             Row {
                 Icon(
-                    painter = painterResource(R.drawable.calender_icon),
+                    painter = painterResource(R.drawable.calendar_icon),
                     contentDescription = null,
                     tint = colorResource(R.color.gray_asparagus3),
                     modifier = Modifier
