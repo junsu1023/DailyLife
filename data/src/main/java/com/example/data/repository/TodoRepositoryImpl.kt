@@ -5,6 +5,7 @@ import com.example.data.mapper.convertTodoEntity
 import com.example.data.mapper.convertTodoModel
 import com.example.domain.model.TodoModel
 import com.example.domain.repository.TodoRepository
+import com.example.domain.state.TodoFailedState
 import javax.inject.Inject
 
 class TodoRepositoryImpl @Inject constructor(
@@ -26,20 +27,20 @@ class TodoRepositoryImpl @Inject constructor(
         todoDataSource.addTodoEntity(todoModel.convertTodoEntity())
         Result.success(Unit)
     } catch (t: Throwable) {
-        Result.failure(t)
+        Result.failure(TodoFailedState.FailedAdd)
     }
 
     override suspend fun deleteTodoModel(todoModel: TodoModel): Result<Unit> = try {
         todoDataSource.deleteTodoEntity(todoModel.convertTodoEntity())
         Result.success(Unit)
     } catch (t: Throwable) {
-        Result.failure(t)
+        Result.failure(TodoFailedState.FailedDelete)
     }
 
     override suspend fun updateTodoList(todoModel: TodoModel): Result<Unit> = try {
         todoDataSource.updateTodoList(todoModel.convertTodoEntity())
         Result.success(Unit)
     } catch(t: Throwable) {
-        Result.failure(t)
+        Result.failure(TodoFailedState.FailedUpdate)
     }
 }

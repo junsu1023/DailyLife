@@ -48,20 +48,14 @@ class TodoViewModel @Inject constructor(
     private val _prevTodoList = MutableStateFlow<List<TodoEntity>>(emptyList())
     val prevTodoList: StateFlow<List<TodoEntity>> get() = _prevTodoList.asStateFlow()
 
-    private val _addTodoItemContinuationError = MutableSharedFlow<Throwable>()
-    val addTodoItemContinuationError: SharedFlow<Throwable> get() = _addTodoItemContinuationError.asSharedFlow()
-
-    private val _deleteTodoItemContinuationError = MutableSharedFlow<Throwable>()
-    val deleteTodoItemContinuationError: SharedFlow<Throwable> get() = _deleteTodoItemContinuationError.asSharedFlow()
-
-    private val _updateTodoItemContinuationError = MutableSharedFlow<Throwable>()
-    val updateTodoListContinuationError: SharedFlow<Throwable> get() = _updateTodoItemContinuationError.asSharedFlow()
-
     private val _todoDialogState = MutableStateFlow(TodoDatePickerState())
     val todoDialogState: StateFlow<TodoDatePickerState> get() = _todoDialogState.asStateFlow()
 
+    private val _todoItemContinuationError = MutableSharedFlow<Throwable>()
+    val todoItemContinuationError: SharedFlow<Throwable> get() = _todoItemContinuationError.asSharedFlow()
+
     private val _selectedDate = MutableSharedFlow<String>()
-    val selectedDate: SharedFlow<String> get() = _selectedDate
+    val selectedDate: SharedFlow<String> get() = _selectedDate.asSharedFlow()
 
     init {
         publishEvent(Event.NeedRefresh)
@@ -110,10 +104,8 @@ class TodoViewModel @Inject constructor(
     fun addTodoList(todoItem: TodoEntity) {
         viewModelScope.launch(Dispatchers.IO) {
             launch {
-                addTodoUseCase(todoItem.convertTodoModel()).onSuccess {
-
-                }.onFailure {
-                    _addTodoItemContinuationError.emit(it)
+                addTodoUseCase(todoItem.convertTodoModel()).onFailure {
+                    _todoItemContinuationError.emit(it)
                 }
             }
 
@@ -124,10 +116,8 @@ class TodoViewModel @Inject constructor(
     fun deleteTodoList(todoItem: TodoEntity) {
         viewModelScope.launch(Dispatchers.IO) {
             launch {
-                deleteTodoUseCase(todoItem.convertTodoModel()).onSuccess {
-
-                }.onFailure {
-                    _deleteTodoItemContinuationError.emit(it)
+                deleteTodoUseCase(todoItem.convertTodoModel()).onFailure {
+                    _todoItemContinuationError.emit(it)
                 }
             }
 
@@ -138,10 +128,8 @@ class TodoViewModel @Inject constructor(
     fun updateTodoList(todoItem: TodoEntity) {
         viewModelScope.launch(Dispatchers.IO) {
             launch {
-                updateTodoListUseCase(todoItem.convertTodoModel()).onSuccess {
-
-                }.onFailure {
-                    _updateTodoItemContinuationError.emit(it)
+                updateTodoListUseCase(todoItem.convertTodoModel()).onFailure {
+                    _todoItemContinuationError.emit(it)
                 }
             }
 

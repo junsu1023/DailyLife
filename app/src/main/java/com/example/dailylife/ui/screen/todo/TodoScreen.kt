@@ -52,6 +52,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat.getString
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.dailylife.R
 import com.example.dailylife.component.CheckBox
@@ -67,6 +68,7 @@ import com.example.dailylife.util.noRippleClick
 import com.example.dailylife.util.roundRippleClickable
 import com.example.dailylife.viewmodel.TodoViewModel
 import com.example.data.entitiy.TodoEntity
+import com.example.domain.state.TodoFailedState
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -76,11 +78,11 @@ fun TodoScreen(
 ) {
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     // show component state
     var isShowSelectContainer by remember { mutableStateOf(false) }
     var isShowCheckDeleteDialog by remember { mutableStateOf(false) }
-    var isShowSnackbar by remember { mutableIntStateOf(0) }
     var isShowBottomSheet by remember { mutableStateOf(false) }
     var isShowTodoEditScreen by remember { mutableStateOf(false) }
 
@@ -98,20 +100,15 @@ fun TodoScreen(
         selectorContainerOffset = it
         isShowSelectContainer = true
     }
+    var showSnackbarMessage by remember { mutableStateOf<String?>(null) }
 
     SideEffect {
         scope.launch {
-            with(todoViewModel) {
-                addTodoItemContinuationError.collectLatest {
-                    isShowSnackbar = 1
-                }
-
-                deleteTodoItemContinuationError.collectLatest {
-                    isShowSnackbar = 2
-                }
-
-                updateTodoListContinuationError.collectLatest {
-                    isShowSnackbar = 3
+            todoViewModel.todoItemContinuationError.collectLatest { throwable ->
+                when(throwable) {
+                    TodoFailedState.FailedAdd -> showSnackbarMessage = getString(context, R.string.failed_add_todo)
+                    TodoFailedState.FailedDelete -> showSnackbarMessage = getString(context, R.string.failed_delete_todo)
+                    TodoFailedState.FailedUpdate -> showSnackbarMessage = getString(context, R.string.failed_update_todo)
                 }
             }
         }
@@ -124,19 +121,6 @@ fun TodoScreen(
                 fullSizeHeight = fullHeight
             }
     ) {
-        if(isShowSnackbar != 0) {
-            TodoSnackBar(
-                modifier = Modifier.align(Alignment.BottomCenter),
-                message = when(isShowSnackbar) {
-                    1 -> stringResource(R.string.failed_add_todo)
-                    2 -> stringResource(R.string.failed_delete_todo)
-                    3 -> stringResource(R.string.failed_update_todo)
-                    else -> stringResource(R.string.blank_text)
-                },
-                changedState = { isShowSnackbar = 0 }
-            )
-        }
-
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -208,7 +192,7 @@ fun TodoScreen(
                 onSaveTodo = { todoItem ->
                     todoViewModel.addTodoList(todoItem)
                 },
-                showBlankSnackBar = { isShowSnackbar = 4 },
+                showBlankSnackBar = { showSnackbarMessage = getString(context, R.string.blank_text) },
             )
         }
 
@@ -253,9 +237,17 @@ fun TodoScreen(
                     todoItem = updateTodoItem!!,
                     todoViewModel = todoViewModel,
                     hideTodoEditScreen = { isShowTodoEditScreen = false },
-                    showBlankSnackBar = { isShowSnackbar = 4 }
+                    showBlankSnackBar = { showSnackbarMessage = getString(context, R.string.blank_text) }
                 )
             }
+        }
+
+        if(showSnackbarMessage != null) {
+            TodoSnackBar(
+                modifier = Modifier.align(Alignment.BottomCenter),
+                message = showSnackbarMessage!!,
+                changedState = { showSnackbarMessage = null }
+            )
         }
     }
 }
