@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -45,18 +46,18 @@ import com.example.dailylife.state.rememberCalendarState
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
-import java.time.format.DateTimeFormatter
-import java.util.Locale
+import kotlin.math.abs
 
 @Composable
-fun CalenderScreen() {
+fun CalendarScreen() {
     val configuration = LocalConfiguration.current
-    val state = rememberCalendarState()
 
     BoxWithConstraints {
         val halfHeight = remember { maxHeight / 2 }
         val fullHeight = remember { maxHeight }
-        var calendarHeight by remember { mutableStateOf(if (state.snapState == CalendarSize.FULL) fullHeight else halfHeight) }
+        val calendarState = rememberCalendarState()
+
+        var calendarHeight by remember { mutableStateOf(if (calendarState.calendarSize == CalendarSize.FULL) fullHeight else halfHeight) }
         val animatedHeight by animateDpAsState(calendarHeight)
 
         Column(
@@ -66,16 +67,20 @@ fun CalenderScreen() {
                     detectVerticalDragGestures(
                         onVerticalDrag = { change, dragAmount ->
                             change.consume()
-                            calendarHeight = (calendarHeight + dragAmount.toDp()).coerceIn(halfHeight, fullHeight)
-                        },
-                        onDragEnd = {
-                            when (state.snapState) {
+                            calendarHeight =
+                                (calendarHeight + dragAmount.toDp()).coerceIn(
+                                    halfHeight,
+                                    fullHeight
+                                )
+                        }, onDragEnd = {
+                            when (calendarState.calendarSize) {
                                 CalendarSize.HALF -> if (calendarHeight > halfHeight) {
-                                    state.snapState = CalendarSize.FULL
+                                    calendarState.calendarSize = CalendarSize.FULL
                                     calendarHeight = fullHeight
                                 }
+
                                 CalendarSize.FULL -> if (calendarHeight < fullHeight) {
-                                    state.snapState = CalendarSize.HALF
+                                    calendarState.calendarSize = CalendarSize.HALF
                                     calendarHeight = halfHeight
                                 }
                             }
@@ -84,21 +89,20 @@ fun CalenderScreen() {
                 }
         ) {
             CalendarArea(
-                state = state,
-                onClick = {
-                    state.snapState = CalendarSize.HALF
-                    calendarHeight = halfHeight
-                },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(animatedHeight)
+                    .height(animatedHeight),
+                calendarState = calendarState,
+                onClick = {
+                    calendarState.calendarSize = CalendarSize.HALF
+                    calendarHeight = halfHeight
+                }
             )
 
             HorizontalDivider(
                 color = Color(0xFFE0E0E0),
                 thickness = 1.dp,
-                modifier = Modifier
-                    .padding(16.dp, 8.dp, 16.dp, 0.dp)
+                modifier = Modifier.padding(16.dp, 8.dp, 16.dp, 0.dp)
             )
 
             Column(
@@ -114,25 +118,18 @@ fun CalenderScreen() {
                         .height(48.dp)
                         .padding(horizontal = 20.dp)
                 ) {
+                    val daysDiff = calendarState.calDaysDiff()
+
                     Text(
-                        text = state.calDaysDiff(),
+                        text = when {
+                            daysDiff == 0L -> stringResource(R.string.calendar_today)
+                            daysDiff == 1L -> stringResource(R.string.calendar_tomorrow)
+                            daysDiff == -1L -> stringResource(R.string.calendar_yesterday)
+                            daysDiff > 0L -> "${daysDiff}${stringResource(R.string.calendar_after)}"
+                            else -> "${abs(daysDiff)}${stringResource(R.string.calendar_before)}"
+                        },
                         fontSize = 17.sp,
-                        lineHeight = 17.sp,
                         fontWeight = FontWeight.SemiBold
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .size(2.dp)
-                            .background(colorResource(R.color.black), CircleShape)
-                    )
-
-                    Text(
-                        text = state.selectedDate.format(DateTimeFormatter.ofPattern("M. d. (E)").withLocale(Locale.forLanguageTag("ko"))),
-                        fontSize = 15.sp,
-                        lineHeight = 15.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = Color(0xFF999999)
                     )
                 }
             }
@@ -143,70 +140,87 @@ fun CalenderScreen() {
 @Composable
 fun CalendarArea(
     modifier: Modifier,
-    state: CalendarState,
+    calendarState: CalendarState,
     onClick: () -> Unit
 ) {
-    LaunchedEffect(state.datePagerState.currentPage) {
-        if(state.currentPageYM != YearMonth.from(state.selectedDate)) {
-            state.selectedDate = YearMonth.from(state.selectedDate).atDay(1)
+    LaunchedEffect(calendarState.datePagerState.currentPage) {
+        if (calendarState.currentPageYM != YearMonth.from(calendarState.selectedDate)) {
+            calendarState.selectedDate = calendarState.currentPageYM.atDay(1)
         }
     }
 
-    LaunchedEffect(state.selectedDate) {
-        state.currentPageYM.takeIf { it != YearMonth.from(state.selectedDate) }?.let { pageMonth -> state.datePagerState
-            .animateScrollToPage(state.datePagerState.currentPage + (1.takeIf { state.selectedDate.isAfter(pageMonth.atEndOfMonth()) } ?: -1)) }
+    LaunchedEffect(calendarState.selectedDate) {
+        if (calendarState.currentPageYM != YearMonth.from(calendarState.selectedDate)) {
+            val nextPage = calendarState.datePagerState.currentPage + if (calendarState.selectedDate.isAfter(calendarState.currentPageYM.atEndOfMonth())) 1 else -1
+            calendarState.datePagerState.animateScrollToPage(nextPage)
+        }
     }
 
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        CalendarHeader(state = state)
+        CalendarHeader(
+            pageYearAndMonth = calendarState.currentPageYM
+        )
+
+        HorizontalDivider(
+            color = colorResource(R.color.platinum),
+            thickness = 1.dp
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
 
         DaysArea()
 
         HorizontalPager(
-            state = state.datePagerState,
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 8.dp)
+            modifier = Modifier.weight(1f),
+            state = calendarState.datePagerState
         ) { page ->
-            val pageYearMonth = remember { YearMonth.from(state.currentDate).plusMonths((page - Int.MAX_VALUE / 2).toLong()) }
-            val dayOfMonth = remember { state.getDaysOfMonth(pageYearMonth) }
+            val pageYearMonth = remember { YearMonth.from(calendarState.currentDate).plusMonths((page - Int.MAX_VALUE / 2).toLong()) }
+            val daysOfMonth = remember { calendarState.getDaysOfMonth(pageYearMonth) }
 
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
+                modifier = Modifier.fillMaxSize()
             ) {
-                dayOfMonth.chunked(7).forEach { week ->
+                val weeks = daysOfMonth.chunked(7)
+
+                weeks.forEachIndexed { idx, week ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f)
                     ) {
-                        week.forEach { date ->
+                        week.forEach { day ->
                             Box(
                                 modifier = Modifier
-                                    .weight(1f)
                                     .fillMaxHeight()
+                                    .weight(1f)
                             ) {
-                                val isToday = remember(date, state.currentDate) { date == state.currentDate }
-                                val isSelected = remember(date, state.selectedDate) { date == state.selectedDate }
-                                val isVisibleMonth = remember { YearMonth.from(date) == pageYearMonth }
+                                val isToday = remember(day, calendarState.currentDate) { day == calendarState.currentDate }
+                                val isSelected = remember(day, calendarState.selectedDate) { day == calendarState.selectedDate }
+                                val isVisibleMonth = remember { YearMonth.from(day) == calendarState.currentPageYM }
+                                val isCurrentMonth = remember { YearMonth.from(day).monthValue == calendarState.currentDate.monthValue }
 
                                 CalendarDay(
-                                    date = date,
+                                    date = day,
                                     isToday = isToday,
                                     isSelected = isSelected,
                                     isVisibleMonth = isVisibleMonth,
-                                    isCurrentMonth = true,
+                                    isCurrentMonth = isCurrentMonth,
                                     onClick = {
-                                        state.selectedDate = date
+                                        calendarState.selectedDate = day
                                         onClick()
                                     }
                                 )
-
                             }
                         }
+                    }
+
+                    if (idx != weeks.size - 1) {
+                        HorizontalDivider(
+                            color = colorResource(R.color.platinum),
+                            thickness = 1.dp
+                        )
                     }
                 }
             }
@@ -216,20 +230,18 @@ fun CalendarArea(
 
 @Composable
 fun CalendarHeader(
-    state: CalendarState
+    pageYearAndMonth: YearMonth
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp)
+            .height(50.dp)
+            .background(colorResource(R.color.bone))
     ) {
         Text(
             modifier = Modifier.align(Alignment.Center),
-            text = state.currentPageYM.run {
-                "${year}${stringResource(R.string.year)} ${monthValue}${stringResource(R.string.month)}"
-            },
+            text = "${pageYearAndMonth.year}${stringResource(R.string.year)} ${pageYearAndMonth.monthValue}${stringResource(R.string.month)}",
             fontSize = 22.sp,
-            lineHeight = 22.sp,
             fontWeight = FontWeight.SemiBold
         )
     }
@@ -259,11 +271,16 @@ fun DaysArea() {
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 textAlign = TextAlign.Center,
-                color = if(dayText == stringResource(R.string.sunday)) colorResource(R.color.red) else colorResource(R.color.black),
+                color = if (dayText == stringResource(R.string.sunday)) colorResource(R.color.red) else colorResource(R.color.black),
                 modifier = Modifier.weight(1f)
             )
         }
     }
+
+    HorizontalDivider(
+        color = colorResource(R.color.platinum),
+        thickness = 1.dp
+    )
 }
 
 
@@ -277,9 +294,9 @@ fun CalendarDay(
     onClick: () -> Unit
 ) {
     val red = colorResource(R.color.red)
-    val white = colorResource(R.color.white)
     val black = colorResource(R.color.black)
     val darkGray = colorResource(R.color.dark_gray)
+    val white = colorResource(R.color.white)
 
     val daysColor = remember(isToday, date, date.dayOfWeek) {
         when {
@@ -291,7 +308,7 @@ fun CalendarDay(
 
     val textColor = remember(isToday, isVisibleMonth) {
         when {
-            isToday -> Color.White
+            isToday -> white
             !isCurrentMonth && date.dayOfWeek == DayOfWeek.SUNDAY -> red.copy(alpha = 0.3f)
             !isCurrentMonth -> darkGray.copy(alpha = 0.3f)
             date.dayOfWeek == DayOfWeek.SUNDAY -> red
