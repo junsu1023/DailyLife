@@ -24,6 +24,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
@@ -128,6 +129,11 @@ fun TodoScreen(
                 isDeleteMode = isDeleteMode,
                 callBackTopBarHeight = { topBarHeight = it },
                 executeDeleteMode = { isDeleteMode = !isDeleteMode }
+            )
+
+            HorizontalDivider(
+                color = colorResource(R.color.platinum),
+                thickness = 1.dp
             )
 
             Spacer(modifier = Modifier.height(5.dp))

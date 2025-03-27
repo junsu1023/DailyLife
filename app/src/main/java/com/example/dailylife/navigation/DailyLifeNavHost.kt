@@ -11,7 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.dailylife.R
 import com.example.dailylife.ui.screen.AccountScreen
-import com.example.dailylife.ui.screen.CalenderScreen
+import com.example.dailylife.ui.screen.CalendarScreen
 import com.example.dailylife.ui.screen.todo.TodoScreen
 import com.example.dailylife.viewmodel.TodoViewModel
 
@@ -38,7 +38,7 @@ fun DailyLifeNavHost(
         }
 
         composable(DailyLifeScreen.Calendar.name) {
-            CalenderScreen()
+            CalendarScreen()
         }
 
         composable(DailyLifeScreen.AccountBook.name) {

@@ -4,6 +4,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.core.event.Event
 import com.example.core.viewmodel.BaseViewModel
 import com.example.dailylife.state.TodoDatePickerState
+import com.example.dailylife.util.onDefault
+import com.example.dailylife.util.onIO
 import com.example.data.entitiy.TodoEntity
 import com.example.data.mapper.convertTodoEntity
 import com.example.data.mapper.convertTodoModel
@@ -64,77 +66,58 @@ class TodoViewModel @Inject constructor(
     override fun handleEvent(event: Event) {
         when(event) {
             Event.NeedRefresh -> refreshTodoList()
+            else -> { }
         }
     }
 
-    private fun getTodayTodoList() {
-        viewModelScope.launch(Dispatchers.IO) {
-            _todayTodoList.update {
-                getTodayTodoListUseCase().map { it.convertTodoEntity() }
-            }
+    private fun getTodayTodoList() = onIO {
+        _todayTodoList.update {
+            getTodayTodoListUseCase().map { it.convertTodoEntity() }
         }
     }
 
-    private fun getFutureTodoList() {
-        viewModelScope.launch(Dispatchers.IO) {
-            _futureTodoList.update {
-                getFutureTodoListUseCase()
-                    .map { it.convertTodoEntity() }
-                    .sortedBy { it.dueDate }
-            }
+    private fun getFutureTodoList() = onIO {
+        _futureTodoList.update {
+            getFutureTodoListUseCase()
+                .map { it.convertTodoEntity() }
+                .sortedBy { it.dueDate }
         }
     }
 
-    private fun getTodayCompleteTodoList() {
-        viewModelScope.launch(Dispatchers.IO) {
-            _todayCompleteTodoList.update {
-                getTodayCompleteTodoListUseCase().map { it.convertTodoEntity() }
-            }
+    private fun getTodayCompleteTodoList() = onIO {
+        _todayCompleteTodoList.update {
+            getTodayCompleteTodoListUseCase().map { it.convertTodoEntity() }
         }
     }
 
-    private fun getPrevTodoList() {
-        viewModelScope.launch(Dispatchers.IO) {
-            _prevTodoList.update {
-                getPrevTodoListUseCase().map { it.convertTodoEntity() }
-            }
+    private fun getPrevTodoList() = onIO {
+        _prevTodoList.update {
+            getPrevTodoListUseCase().map { it.convertTodoEntity() }
         }
     }
 
-    fun addTodoList(todoItem: TodoEntity) {
-        viewModelScope.launch(Dispatchers.IO) {
-            launch {
-                addTodoUseCase(todoItem.convertTodoModel()).onFailure {
-                    _todoItemContinuationError.emit(it)
-                }
-            }
-
-            publishEvent(Event.NeedRefresh)
+    fun addTodoList(todoItem: TodoEntity) = onIO {
+        addTodoUseCase(todoItem.convertTodoModel()).onFailure {
+            _todoItemContinuationError.emit(it)
         }
+
+        publishEvent(Event.NeedRefresh)
     }
 
-    fun deleteTodoList(todoItem: TodoEntity) {
-        viewModelScope.launch(Dispatchers.IO) {
-            launch {
-                deleteTodoUseCase(todoItem.convertTodoModel()).onFailure {
-                    _todoItemContinuationError.emit(it)
-                }
-            }
-
-            publishEvent(Event.NeedRefresh)
+    fun deleteTodoList(todoItem: TodoEntity) = onIO {
+        deleteTodoUseCase(todoItem.convertTodoModel()).onFailure {
+            _todoItemContinuationError.emit(it)
         }
+
+        publishEvent(Event.NeedRefresh)
     }
 
-    fun updateTodoList(todoItem: TodoEntity) {
-        viewModelScope.launch(Dispatchers.IO) {
-            launch {
-                updateTodoListUseCase(todoItem.convertTodoModel()).onFailure {
-                    _todoItemContinuationError.emit(it)
-                }
-            }
-
-            publishEvent(Event.NeedRefresh)
+    fun updateTodoList(todoItem: TodoEntity) = onIO {
+        updateTodoListUseCase(todoItem.convertTodoModel()).onFailure {
+            _todoItemContinuationError.emit(it)
         }
+
+        publishEvent(Event.NeedRefresh)
     }
 
     private fun refreshTodoList() {
@@ -164,9 +147,7 @@ class TodoViewModel @Inject constructor(
         }
     }
 
-    fun setSelectedDate(date: String) {
-        viewModelScope.launch {
-            _selectedDate.emit(date)
-        }
+    fun setSelectedDate(date: String) = onDefault {
+        _selectedDate.emit(date)
     }
 }

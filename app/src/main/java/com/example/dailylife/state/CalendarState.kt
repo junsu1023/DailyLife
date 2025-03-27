@@ -13,6 +13,7 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.temporal.TemporalAdjusters
+import kotlin.math.abs
 
 enum class CalendarSize {
     HALF, FULL
@@ -21,28 +22,19 @@ enum class CalendarSize {
 data class CalendarState(
     val datePagerState: PagerState
 ) {
-    var snapState by mutableStateOf(CalendarSize.FULL)
+    var calendarSize by mutableStateOf(CalendarSize.FULL)
     var selectedDate: LocalDate by mutableStateOf(LocalDate.now())
     val currentDate: LocalDate get() = LocalDate.now()
-    val currentPageYM: YearMonth get() = YearMonth.from(currentDate)
+    val currentPageYM: YearMonth get() = YearMonth.from(currentDate).plusMonths(datePagerState.currentPage - Int.MAX_VALUE / 2L)
 
     fun getDaysOfMonth(ym: YearMonth): List<LocalDate> {
-        val startMonth = ym.atDay(1).with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY))
-        val endMonth = ym.atEndOfMonth().with(TemporalAdjusters.nextOrSame(DayOfWeek.SATURDAY))
+        val startOfMonth = ym.atDay(1).with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY))
+        val endOfMonth = ym.atEndOfMonth().with(TemporalAdjusters.nextOrSame(DayOfWeek.SATURDAY))
 
-        return generateSequence(startMonth) { it.plusDays(1) }.takeWhile { !it.isAfter(endMonth) }.toList()
+        return generateSequence(startOfMonth) { it.plusDays(1) }.takeWhile { !it.isAfter(endOfMonth) }.toList()
     }
 
-    fun calDaysDiff(): String {
-        val diff = selectedDate.toEpochDay() - currentDate.toEpochDay()
-        return when {
-            diff == 0L -> "오늘"
-            diff == 1L -> "내일"
-            diff == -1L -> "어제"
-            diff > 0L -> "${diff}일 후"
-            else -> "${diff}일 전"
-        }
-    }
+    fun calDaysDiff(): Long = selectedDate.toEpochDay() - currentDate.toEpochDay()
 
     companion object {
         fun Saver(
@@ -50,7 +42,7 @@ data class CalendarState(
         ): Saver<CalendarState, Any> = listSaver(
             save = {
                 listOf(
-                    it.snapState,
+                    it.calendarSize,
                     it.selectedDate
                 )
             },
@@ -58,7 +50,7 @@ data class CalendarState(
                 CalendarState(
                     datePagerState = datePagerState
                 ).apply {
-                    snapState = savedValue[0] as CalendarSize
+                    calendarSize = savedValue[0] as CalendarSize
                     selectedDate = savedValue[1] as LocalDate
                 }
             }
@@ -66,16 +58,17 @@ data class CalendarState(
     }
 }
 
+
 @Composable
 fun rememberCalendarState(
-    pagerState: PagerState = rememberPagerState(Int.MAX_VALUE / 2) { Int.MAX_VALUE },
+    datePagerState: PagerState = rememberPagerState(Int.MAX_VALUE / 2) { Int.MAX_VALUE },
 ): CalendarState {
     return rememberSaveable(
-        pagerState,
-        saver = CalendarState.Saver(pagerState)
+        datePagerState,
+        saver = CalendarState.Saver(datePagerState)
     ) {
         CalendarState(
-            datePagerState = pagerState
+            datePagerState = datePagerState
         )
     }
 }
