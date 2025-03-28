@@ -1,12 +1,14 @@
 package com.example.data.di
 
+import com.example.domain.repository.CalendarRepository
 import com.example.domain.repository.TodoRepository
 import com.example.domain.usecase.AddTodoUseCase
 import com.example.domain.usecase.DeleteTodoUseCase
-import com.example.domain.usecase.GetFutureTodoListUseCase
-import com.example.domain.usecase.GetPrevTodoListUseCase
-import com.example.domain.usecase.GetTodayCompleteTodoListUseCase
-import com.example.domain.usecase.GetTodayTodoListUseCase
+import com.example.domain.usecase.GetDateTodoUseCase
+import com.example.domain.usecase.GetTodoListOfFutureUseCase
+import com.example.domain.usecase.GetTodoListOfPrevUseCase
+import com.example.domain.usecase.GetCompleteTodoListOfTodayUseCase
+import com.example.domain.usecase.GetTodoListOfTodayUseCase
 import com.example.domain.usecase.UpdateTodoListUseCase
 import dagger.Module
 import dagger.Provides
@@ -17,16 +19,16 @@ import dagger.hilt.components.SingletonComponent
 @InstallIn(SingletonComponent::class)
 object UseCaseModule {
     @Provides
-    fun provideGetTodayTodoListUseCase(todoRepository: TodoRepository) = GetTodayTodoListUseCase(todoRepository)
+    fun provideGetTodoListOfTodayUseCase(todoRepository: TodoRepository) = GetTodoListOfTodayUseCase(todoRepository)
 
     @Provides
-    fun provideGetFutureTodoListUseCase(todoRepository: TodoRepository) = GetFutureTodoListUseCase(todoRepository)
+    fun provideGetTodoListOfFutureUseCase(todoRepository: TodoRepository) = GetTodoListOfFutureUseCase(todoRepository)
 
     @Provides
-    fun provideGetTodayCompleteTodoListUseCase(todoRepository: TodoRepository) = GetTodayCompleteTodoListUseCase(todoRepository)
+    fun provideGetCompleteTodoListOfTodayUseCase(todoRepository: TodoRepository) = GetCompleteTodoListOfTodayUseCase(todoRepository)
 
     @Provides
-    fun provideGetPrevTodoListUseCase(todoRepository: TodoRepository) = GetPrevTodoListUseCase(todoRepository)
+    fun provideGetTodoListOfPrevUseCase(todoRepository: TodoRepository) = GetTodoListOfPrevUseCase(todoRepository)
 
     @Provides
     fun provideAddTodoUseCase(todoRepository: TodoRepository) = AddTodoUseCase(todoRepository)
@@ -36,4 +38,7 @@ object UseCaseModule {
 
     @Provides
     fun provideUpdateTodoUseCase(todoRepository: TodoRepository) = UpdateTodoListUseCase(todoRepository)
+
+    @Provides
+    fun provideGetDateTodoListUseCase(calendarRepository: CalendarRepository) = GetDateTodoUseCase(calendarRepository)
 }

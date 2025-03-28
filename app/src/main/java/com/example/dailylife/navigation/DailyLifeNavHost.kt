@@ -13,6 +13,7 @@ import com.example.dailylife.R
 import com.example.dailylife.ui.screen.AccountScreen
 import com.example.dailylife.ui.screen.CalendarScreen
 import com.example.dailylife.ui.screen.todo.TodoScreen
+import com.example.dailylife.viewmodel.CalendarViewModel
 import com.example.dailylife.viewmodel.TodoViewModel
 
 @Composable
@@ -27,18 +28,27 @@ fun DailyLifeNavHost(
             .background(colorResource(R.color.ivory)),
         startDestination = DailyLifeScreen.TodoList.name
     ) {
-        composable(DailyLifeScreen.TodoList.name) {
-            val todoViewModel = hiltViewModel<TodoViewModel>(
-                navController.getBackStackEntry(DailyLifeScreen.TodoList.name)
-            )
+        composable(DailyLifeScreen.TodoList.name) { backStackEntry ->
+            val todoViewModel: TodoViewModel = hiltViewModel(backStackEntry)
 
             TodoScreen(
                 todoViewModel = todoViewModel
             )
         }
 
-        composable(DailyLifeScreen.Calendar.name) {
-            CalendarScreen()
+        composable(DailyLifeScreen.Calendar.name) { backStackEntry ->
+            val todoViewModel: TodoViewModel = if(navController.previousBackStackEntry != null) {
+                hiltViewModel(navController.previousBackStackEntry!!)
+            } else {
+                hiltViewModel()
+            }
+
+            val calendarViewModel = hiltViewModel<CalendarViewModel>(backStackEntry)
+
+            CalendarScreen(
+                todoViewModel = todoViewModel,
+                calendarViewModel = calendarViewModel
+            )
         }
 
         composable(DailyLifeScreen.AccountBook.name) {

@@ -1,6 +1,5 @@
 package com.example.dailylife.viewmodel
 
-import androidx.lifecycle.viewModelScope
 import com.example.core.event.Event
 import com.example.core.viewmodel.BaseViewModel
 import com.example.dailylife.state.TodoDatePickerState
@@ -11,13 +10,12 @@ import com.example.data.mapper.convertTodoEntity
 import com.example.data.mapper.convertTodoModel
 import com.example.domain.usecase.AddTodoUseCase
 import com.example.domain.usecase.DeleteTodoUseCase
-import com.example.domain.usecase.GetFutureTodoListUseCase
-import com.example.domain.usecase.GetPrevTodoListUseCase
-import com.example.domain.usecase.GetTodayCompleteTodoListUseCase
-import com.example.domain.usecase.GetTodayTodoListUseCase
+import com.example.domain.usecase.GetTodoListOfFutureUseCase
+import com.example.domain.usecase.GetTodoListOfPrevUseCase
+import com.example.domain.usecase.GetCompleteTodoListOfTodayUseCase
+import com.example.domain.usecase.GetTodoListOfTodayUseCase
 import com.example.domain.usecase.UpdateTodoListUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -25,30 +23,29 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class TodoViewModel @Inject constructor(
-    private val getTodayTodoListUseCase: GetTodayTodoListUseCase,
-    private val getFutureTodoListUseCase: GetFutureTodoListUseCase,
-    private val getTodayCompleteTodoListUseCase: GetTodayCompleteTodoListUseCase,
-    private val getPrevTodoListUseCase: GetPrevTodoListUseCase,
+    private val getTodoListOfTodayUseCase: GetTodoListOfTodayUseCase,
+    private val getTodoListOfFutureUseCase: GetTodoListOfFutureUseCase,
+    private val getCompleteTodoListOfTodayUseCase: GetCompleteTodoListOfTodayUseCase,
+    private val getTodoListOfPrevUseCase: GetTodoListOfPrevUseCase,
     private val addTodoUseCase: AddTodoUseCase,
     private val deleteTodoUseCase: DeleteTodoUseCase,
     private val updateTodoListUseCase: UpdateTodoListUseCase
 ): BaseViewModel() {
-    private val _todayTodoList = MutableStateFlow<List<TodoEntity>>(emptyList())
-    val todayTodoList: StateFlow<List<TodoEntity>> get() = _todayTodoList.asStateFlow()
+    private val _todoListOfToday = MutableStateFlow<List<TodoEntity>>(emptyList())
+    val todoListOfToday: StateFlow<List<TodoEntity>> get() = _todoListOfToday.asStateFlow()
 
-    private val _futureTodoList = MutableStateFlow<List<TodoEntity>>(emptyList())
-    val futureTodoList: StateFlow<List<TodoEntity>> get() = _futureTodoList.asStateFlow()
+    private val _todoListOfFuture = MutableStateFlow<List<TodoEntity>>(emptyList())
+    val todoListOfFuture: StateFlow<List<TodoEntity>> get() = _todoListOfFuture.asStateFlow()
 
-    private val _todayCompleteTodoList = MutableStateFlow<List<TodoEntity>>(emptyList())
-    val todayCompleteTodoList: StateFlow<List<TodoEntity>> get() = _todayCompleteTodoList.asStateFlow()
+    private val _completeTodoListOfToday = MutableStateFlow<List<TodoEntity>>(emptyList())
+    val completeTodoListOfToday: StateFlow<List<TodoEntity>> get() = _completeTodoListOfToday.asStateFlow()
 
-    private val _prevTodoList = MutableStateFlow<List<TodoEntity>>(emptyList())
-    val prevTodoList: StateFlow<List<TodoEntity>> get() = _prevTodoList.asStateFlow()
+    private val _todoListOfPrev = MutableStateFlow<List<TodoEntity>>(emptyList())
+    val todoListOfPrev: StateFlow<List<TodoEntity>> get() = _todoListOfPrev.asStateFlow()
 
     private val _todoDialogState = MutableStateFlow(TodoDatePickerState())
     val todoDialogState: StateFlow<TodoDatePickerState> get() = _todoDialogState.asStateFlow()
@@ -71,28 +68,28 @@ class TodoViewModel @Inject constructor(
     }
 
     private fun getTodayTodoList() = onIO {
-        _todayTodoList.update {
-            getTodayTodoListUseCase().map { it.convertTodoEntity() }
+        _todoListOfToday.update {
+            getTodoListOfTodayUseCase().map { it.convertTodoEntity() }
         }
     }
 
     private fun getFutureTodoList() = onIO {
-        _futureTodoList.update {
-            getFutureTodoListUseCase()
+        _todoListOfFuture.update {
+            getTodoListOfFutureUseCase()
                 .map { it.convertTodoEntity() }
                 .sortedBy { it.dueDate }
         }
     }
 
     private fun getTodayCompleteTodoList() = onIO {
-        _todayCompleteTodoList.update {
-            getTodayCompleteTodoListUseCase().map { it.convertTodoEntity() }
+        _completeTodoListOfToday.update {
+            getCompleteTodoListOfTodayUseCase().map { it.convertTodoEntity() }
         }
     }
 
     private fun getPrevTodoList() = onIO {
-        _prevTodoList.update {
-            getPrevTodoListUseCase().map { it.convertTodoEntity() }
+        _todoListOfPrev.update {
+            getTodoListOfPrevUseCase().map { it.convertTodoEntity() }
         }
     }
 

@@ -17,13 +17,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,14 +45,20 @@ import androidx.compose.ui.unit.sp
 import com.example.dailylife.R
 import com.example.dailylife.state.CalendarSize
 import com.example.dailylife.state.CalendarState
+import com.example.dailylife.state.TodoState
 import com.example.dailylife.state.rememberCalendarState
+import com.example.dailylife.viewmodel.CalendarViewModel
+import com.example.dailylife.viewmodel.TodoViewModel
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import kotlin.math.abs
 
 @Composable
-fun CalendarScreen() {
+fun CalendarScreen(
+    todoViewModel: TodoViewModel,
+    calendarViewModel: CalendarViewModel
+) {
     val configuration = LocalConfiguration.current
 
     BoxWithConstraints {
@@ -64,28 +73,24 @@ fun CalendarScreen() {
             modifier = Modifier
                 .background(colorResource(R.color.ivory))
                 .pointerInput(Unit) {
-                    detectVerticalDragGestures(
-                        onVerticalDrag = { change, dragAmount ->
-                            change.consume()
-                            calendarHeight =
-                                (calendarHeight + dragAmount.toDp()).coerceIn(
-                                    halfHeight,
-                                    fullHeight
-                                )
-                        }, onDragEnd = {
-                            when (calendarState.calendarSize) {
-                                CalendarSize.HALF -> if (calendarHeight > halfHeight) {
-                                    calendarState.calendarSize = CalendarSize.FULL
-                                    calendarHeight = fullHeight
-                                }
+                    detectVerticalDragGestures(onVerticalDrag = { change, dragAmount ->
+                        change.consume()
+                        calendarHeight = (calendarHeight + dragAmount.toDp()).coerceIn(
+                            halfHeight, fullHeight
+                        )
+                    }, onDragEnd = {
+                        when (calendarState.calendarSize) {
+                            CalendarSize.HALF -> if (calendarHeight > halfHeight) {
+                                calendarState.calendarSize = CalendarSize.FULL
+                                calendarHeight = fullHeight
+                            }
 
-                                CalendarSize.FULL -> if (calendarHeight < fullHeight) {
-                                    calendarState.calendarSize = CalendarSize.HALF
-                                    calendarHeight = halfHeight
-                                }
+                            CalendarSize.FULL -> if (calendarHeight < fullHeight) {
+                                calendarState.calendarSize = CalendarSize.HALF
+                                calendarHeight = halfHeight
                             }
                         }
-                    )
+                    })
                 }
         ) {
             CalendarArea(
@@ -110,28 +115,12 @@ fun CalendarScreen() {
                     .fillMaxWidth()
                     .height(configuration.screenHeightDp.dp - animatedHeight)
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .padding(horizontal = 20.dp)
-                ) {
-                    val daysDiff = calendarState.calDaysDiff()
+                DayDiffInfoArea(calendarState)
 
-                    Text(
-                        text = when {
-                            daysDiff == 0L -> stringResource(R.string.calendar_today)
-                            daysDiff == 1L -> stringResource(R.string.calendar_tomorrow)
-                            daysDiff == -1L -> stringResource(R.string.calendar_yesterday)
-                            daysDiff > 0L -> "${daysDiff}${stringResource(R.string.calendar_after)}"
-                            else -> "${abs(daysDiff)}${stringResource(R.string.calendar_before)}"
-                        },
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+                TodoListOfDateArea(
+                    todoViewModel = todoViewModel,
+                    calendarViewModel = calendarViewModel
+                )
             }
         }
     }
@@ -178,6 +167,7 @@ fun CalendarArea(
         ) { page ->
             val pageYearMonth = remember { YearMonth.from(calendarState.currentDate).plusMonths((page - Int.MAX_VALUE / 2).toLong()) }
             val daysOfMonth = remember { calendarState.getDaysOfMonth(pageYearMonth) }
+            println("test-kjs: daysOfMonth = $daysOfMonth")
 
             Column(
                 modifier = Modifier.fillMaxSize()
@@ -198,8 +188,8 @@ fun CalendarArea(
                             ) {
                                 val isToday = remember(day, calendarState.currentDate) { day == calendarState.currentDate }
                                 val isSelected = remember(day, calendarState.selectedDate) { day == calendarState.selectedDate }
-                                val isVisibleMonth = remember { YearMonth.from(day) == calendarState.currentPageYM }
-                                val isCurrentMonth = remember { YearMonth.from(day).monthValue == calendarState.currentDate.monthValue }
+                                val isVisibleMonth = remember { YearMonth.from(day).monthValue == pageYearMonth.monthValue }
+                                val isCurrentMonth = remember { YearMonth.from(day).monthValue == pageYearMonth.monthValue }
 
                                 CalendarDay(
                                     date = day,
@@ -289,8 +279,8 @@ fun CalendarDay(
     date: LocalDate,
     isToday: Boolean,
     isSelected: Boolean,
-    isVisibleMonth: Boolean,
-    isCurrentMonth: Boolean,
+    isVisibleMonth: Boolean, // 보이는 달
+    isCurrentMonth: Boolean, // 현재 달
     onClick: () -> Unit
 ) {
     val red = colorResource(R.color.red)
@@ -309,8 +299,8 @@ fun CalendarDay(
     val textColor = remember(isToday, isVisibleMonth) {
         when {
             isToday -> white
-            !isCurrentMonth && date.dayOfWeek == DayOfWeek.SUNDAY -> red.copy(alpha = 0.3f)
-            !isCurrentMonth -> darkGray.copy(alpha = 0.3f)
+            !isVisibleMonth && date.dayOfWeek == DayOfWeek.SUNDAY -> red.copy(alpha = 0.3f)
+            !isVisibleMonth -> darkGray.copy(alpha = 0.3f)
             date.dayOfWeek == DayOfWeek.SUNDAY -> red
             else -> black
         }
@@ -343,4 +333,56 @@ fun CalendarDay(
             }
         }
     }
+}
+
+@Composable
+fun DayDiffInfoArea(
+    calendarState: CalendarState
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .padding(horizontal = 20.dp)
+    ) {
+        val daysDiff = calendarState.calDaysDiff()
+
+        Text(
+            text = when {
+                daysDiff == 0L -> stringResource(R.string.calendar_today)
+                daysDiff == 1L -> stringResource(R.string.calendar_tomorrow)
+                daysDiff == -1L -> stringResource(R.string.calendar_yesterday)
+                daysDiff > 0L -> "${daysDiff}${stringResource(R.string.calendar_after)}"
+                else -> "${abs(daysDiff)}${stringResource(R.string.calendar_before)}"
+            },
+            fontSize = 17.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
+@Composable
+fun TodoListOfDateArea(
+    todoViewModel: TodoViewModel,
+    calendarViewModel: CalendarViewModel
+) {
+    val scrollState = rememberScrollState()
+    val todoListOfDate by calendarViewModel.todoListOfDate.collectAsState()
+    val todoState = arrayOf(TodoState.TODAY, TodoState.COMPLETE)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(scrollState)
+    ) {
+        repeat(2) {
+        }
+    }
+}
+
+@Composable
+fun CalendarTodoItemArea() {
+    Row {  }
 }
