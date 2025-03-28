@@ -24,4 +24,7 @@ object DatabaseModule {
 
     @Provides
     fun provideTodoListDao(todoDatabase: TodoDatabase) = todoDatabase.todoDao()
+
+    @Provides
+    fun provideCalendarDao(todoDatabase: TodoDatabase) = todoDatabase.calendarDao()
 }

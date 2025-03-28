@@ -4,8 +4,8 @@ import com.example.domain.model.TodoModel
 import com.example.domain.repository.TodoRepository
 import javax.inject.Inject
 
-class GetPrevTodoListUseCase @Inject constructor(
+class GetCompleteTodoListOfTodayUseCase @Inject constructor(
     private val todoRepository: TodoRepository
 ) {
-    suspend operator fun invoke(): List<TodoModel> = todoRepository.getPrevTodoList()
+    suspend operator fun invoke(): List<TodoModel> = todoRepository.getCompleteTodoListOfToday()
 }

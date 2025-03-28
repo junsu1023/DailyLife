@@ -347,10 +347,10 @@ fun TodoListContent(
     callBackShowDialogState: () -> Unit,
     showTodoEditScreen: () -> Unit
 ) {
-    val prevTodoList by todoViewModel.prevTodoList.collectAsStateWithLifecycle()
-    val todayTodoList by todoViewModel.todayTodoList.collectAsStateWithLifecycle()
-    val futureTodoList by todoViewModel.futureTodoList.collectAsStateWithLifecycle()
-    val todayCompleteTodoList by todoViewModel.todayCompleteTodoList.collectAsStateWithLifecycle()
+    val prevTodoList by todoViewModel.todoListOfPrev.collectAsStateWithLifecycle()
+    val todayTodoList by todoViewModel.todoListOfToday.collectAsStateWithLifecycle()
+    val futureTodoList by todoViewModel.todoListOfFuture.collectAsStateWithLifecycle()
+    val todayCompleteTodoList by todoViewModel.completeTodoListOfToday.collectAsStateWithLifecycle()
     val todoListKind = arrayOf(prevTodoList, todayTodoList, futureTodoList, todayCompleteTodoList)
     val todoState = arrayOf(TodoState.PREV, TodoState.TODAY, TodoState.FUTURE, TodoState.COMPLETE)
 

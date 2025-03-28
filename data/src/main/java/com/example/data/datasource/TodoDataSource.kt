@@ -6,13 +6,13 @@ import com.example.data.entitiy.TodoEntity
 class TodoDataSource(
     private val todoListDao: TodoDao,
 ) {
-    fun getTodayTodoList(): List<TodoEntity> = todoListDao.getTodayTodoList()
+    fun getTodoListOfToday(): List<TodoEntity> = todoListDao.getTodoListOfToday()
 
-    fun getFutureTodoList(): List<TodoEntity> = todoListDao.getFutureTodoList()
+    fun getTodoListOfFuture(): List<TodoEntity> = todoListDao.getTodoListOfFuture()
 
-    fun getTodayCompleteTodoList(): List<TodoEntity> = todoListDao.getTodayCompleteTodoList()
+    fun getCompleteTodoListOfToday(): List<TodoEntity> = todoListDao.getCompleteTodoListOfToday()
 
-    fun getPrevTodoList(): List<TodoEntity> = todoListDao.getPrevTodoList()
+    fun getTodoListOfPrev(): List<TodoEntity> = todoListDao.getTodoListOfPrev()
 
     fun addTodoEntity(todoEntity: TodoEntity) = todoListDao.addTodoEntity(todoEntity)
 
