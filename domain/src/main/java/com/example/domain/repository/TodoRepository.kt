@@ -11,6 +11,12 @@ interface TodoRepository {
 
     suspend fun getTodoListOfPrev(): List<TodoModel>
 
+    suspend fun getTodoListOfMonth(month: Int): List<TodoModel>
+
+    suspend fun getTodoListOfDate(date: String): List<TodoModel>
+
+    suspend fun getCompleteTodoListOfDate(date: String): List<TodoModel>
+
     suspend fun addTodoModel(todoModel: TodoModel): Result<Unit>
 
     suspend fun deleteTodoModel(todoModel: TodoModel): Result<Unit>

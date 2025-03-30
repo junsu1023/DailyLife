@@ -10,7 +10,9 @@ import kotlinx.coroutines.launch
 abstract class BaseViewModel: ViewModel() {
     abstract fun handleEvent(event: Event)
 
-    private val _event: MutableSharedFlow<Event> = MutableSharedFlow()
+    companion object {
+        private val _event: MutableSharedFlow<Event> = MutableSharedFlow()
+    }
 
     init {
         subscribeEvent()

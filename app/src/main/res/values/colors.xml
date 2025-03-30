@@ -8,11 +8,10 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <!-- My Color -->
+
     <color name="bone">#FFD9DFC6</color>
     <color name="ivory">#FFFFFDF0</color>
     <color name="blond">#FFFFF2C2</color>
-
     <color name="alabaster">#FFF1F0E9</color>
     <color name="gray_asparagus">#FF41644A</color>
     <color name="gray_asparagus2">#3D41644A</color>
@@ -30,4 +29,5 @@
     <color name ="blue_violet">#8A2BE2</color>
     <color name="red">#FF0000</color>
     <color name="dark_gray">#FF444444</color>
+    <color name="calendar_divider">#FFE0E0E0</color>
 </resources>

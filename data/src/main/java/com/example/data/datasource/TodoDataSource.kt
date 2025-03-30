@@ -14,6 +14,12 @@ class TodoDataSource(
 
     fun getTodoListOfPrev(): List<TodoEntity> = todoListDao.getTodoListOfPrev()
 
+    fun getTodoListOfDate(date: String): List<TodoEntity> = todoListDao.getTodoListOfDate(date)
+
+    fun getCompleteTodoListOfDate(date: String): List<TodoEntity> = todoListDao.getCompleteTodoListOfDate(date)
+
+    fun getTodoListOfMonth(month: Int): List<TodoEntity> = todoListDao.getTodoListOfMonth(month)
+
     fun addTodoEntity(todoEntity: TodoEntity) = todoListDao.addTodoEntity(todoEntity)
 
     fun deleteTodoEntity(todoEntity: TodoEntity) = todoListDao.deleteTodoEntity(todoEntity)
