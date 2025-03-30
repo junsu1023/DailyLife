@@ -13,7 +13,6 @@ import com.example.dailylife.R
 import com.example.dailylife.ui.screen.AccountScreen
 import com.example.dailylife.ui.screen.CalendarScreen
 import com.example.dailylife.ui.screen.todo.TodoScreen
-import com.example.dailylife.viewmodel.CalendarViewModel
 import com.example.dailylife.viewmodel.TodoViewModel
 
 @Composable
@@ -40,14 +39,11 @@ fun DailyLifeNavHost(
             val todoViewModel: TodoViewModel = if(navController.previousBackStackEntry != null) {
                 hiltViewModel(navController.previousBackStackEntry!!)
             } else {
-                hiltViewModel()
+                hiltViewModel(backStackEntry)
             }
-
-            val calendarViewModel = hiltViewModel<CalendarViewModel>(backStackEntry)
 
             CalendarScreen(
                 todoViewModel = todoViewModel,
-                calendarViewModel = calendarViewModel
             )
         }
 

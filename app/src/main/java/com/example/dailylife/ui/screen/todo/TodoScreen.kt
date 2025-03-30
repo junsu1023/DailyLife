@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -29,11 +28,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -46,13 +43,14 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.getString
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.dailylife.R
@@ -77,7 +75,6 @@ import kotlinx.coroutines.launch
 fun TodoScreen(
     todoViewModel: TodoViewModel
 ) {
-    val density = LocalDensity.current
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -160,35 +157,17 @@ fun TodoScreen(
         }
 
         if(isShowSelectContainer) {
-            val bottomLeftOffset = selectorContainerOffset.first
-            val topLeftOffset = selectorContainerOffset.second
-            val bottomEndOffsetY = (bottomLeftOffset.y - topBarHeight + headerHeight) + iconSelectorContainerSize.height.toFloat()
-
-            val offsetX = with(density) { (bottomLeftOffset.x - iconSelectorContainerSize.width.toFloat() / 2).toDp() }
-            val offsetY = with(density) {
-                if(bottomEndOffsetY >= fullSizeHeight) (topLeftOffset.y - iconSelectorContainerSize.height.toFloat() - headerHeight).toDp()
-                else (bottomLeftOffset.y - topBarHeight + headerHeight).toDp()
-            }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .noRippleClick(
-                        onClick = { isShowSelectContainer = false }
-                    )
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .offset(x = offsetX, y = offsetY)
-                ) {
-                    IconSelectorContainer(
-                        todoItem = updateTodoItem!!,
-                        todoViewModel = todoViewModel,
-                        callBackContainerSize = { iconSelectorContainerSize = it }
-                    )
-                }
-            }
+            IconSelectorContainer(
+                todoItem = updateTodoItem!!,
+                todoViewModel = todoViewModel,
+                selectorContainerOffset = selectorContainerOffset,
+                topBarHeight = topBarHeight,
+                headerHeight = headerHeight,
+                iconSelectorContainerSize = iconSelectorContainerSize,
+                maxHeight = fullSizeHeight,
+                callBackContainerSize = { iconSelectorContainerSize = it },
+                isShowSelectContainer = { isShowSelectContainer = it }
+            )
         }
 
         if(isShowBottomSheet) {
@@ -219,11 +198,11 @@ fun TodoScreen(
         if(todoDialogState.isShowDialog) {
             TodoDatePickerDialog(
                 selectedDate = todoDialogState.selectedDate,
-                todoViewModel = todoViewModel,
                 onClickConfirm = { date ->
                     with(todoViewModel) {
                         hiddenTodoDateDialog()
                         updateTodoDate(date)
+                        setSelectedDate(date)
                     }
                 },
                 onClickCancel = { todoViewModel.hiddenTodoDateDialog() }
@@ -231,21 +210,14 @@ fun TodoScreen(
         }
 
         if(isShowTodoEditScreen) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .noRippleClick(
-                        onClick = { isShowTodoEditScreen = false }
-                    )
-            ) {
-                TodoEditScreen(
-                    modifier = Modifier.align(Alignment.Center),
-                    todoItem = updateTodoItem!!,
-                    todoViewModel = todoViewModel,
-                    hideTodoEditScreen = { isShowTodoEditScreen = false },
-                    showBlankSnackBar = { showSnackbarMessage = getString(context, R.string.blank_text) }
-                )
-            }
+            TodoEditScreen(
+                modifier = Modifier.align(Alignment.Center),
+                todoItem = updateTodoItem!!,
+                todoViewModel = todoViewModel,
+                hideTodoEditScreen = { isShowTodoEditScreen = false },
+                showBlankSnackBar = { showSnackbarMessage = getString(context, R.string.blank_text) },
+                onClick = { isShowTodoEditScreen = false }
+            )
         }
 
         if(showSnackbarMessage != null) {
@@ -353,6 +325,7 @@ fun TodoListContent(
     val todayCompleteTodoList by todoViewModel.completeTodoListOfToday.collectAsStateWithLifecycle()
     val todoListKind = arrayOf(prevTodoList, todayTodoList, futureTodoList, todayCompleteTodoList)
     val todoState = arrayOf(TodoState.PREV, TodoState.TODAY, TodoState.FUTURE, TodoState.COMPLETE)
+    val date by todoViewModel.selectedDate.collectAsStateWithLifecycle()
 
     val scrollState = rememberScrollState()
 
@@ -378,6 +351,7 @@ fun TodoListContent(
                     state = todoState[idx],
                     list = todoListKind[idx],
                     isDeleteMode = isDeleteMode,
+                    date = date,
                     updateTodoList = { todoViewModel.updateTodoList(it) },
                     callBackOffset = callBackOffset,
                     callBackHeaderHeight = callBackHeaderHeight,
@@ -395,6 +369,7 @@ fun TodoBundle(
     state: TodoState,
     list: List<TodoEntity>,
     isDeleteMode: Boolean,
+    date: String,
     updateTodoList: (TodoEntity) -> Unit,
     callBackOffset: (Pair<Offset, Offset>) -> Unit,
     callBackHeaderHeight: (Float) -> Unit,
@@ -404,6 +379,7 @@ fun TodoBundle(
 ) {
     TodoListHeader(
         state = state,
+        date = date,
         callBackHeaderHeight = callBackHeaderHeight
     ) {
         list.forEach { todo ->
@@ -426,6 +402,7 @@ fun TodoBundle(
 @Composable
 fun TodoListHeader(
     state: TodoState,
+    date: String,
     callBackHeaderHeight: (Float) -> Unit,
     content: @Composable (() -> Unit)
 ) {
@@ -457,6 +434,8 @@ fun TodoListHeader(
                     TodoState.TODAY -> stringResource(R.string.today)
                     TodoState.FUTURE -> stringResource(R.string.future)
                     TodoState.COMPLETE -> stringResource(R.string.today_complete)
+                    TodoState.TODO -> stringResource(R.string.Work)
+                    TodoState.DATE_COMPLETE -> stringResource(R.string.complete)
                 }
             )
 
@@ -498,7 +477,8 @@ fun TodoExpandButton(
 fun TodoItemArea(
     todoKind: TodoState,
     todoItem: TodoEntity,
-    isDeleteMode: Boolean,
+    isDeleteMode: Boolean = false,
+    isCalendarItem: Boolean = false,
     updateTodoList: (TodoEntity) -> Unit,
     callBackOffset: (Pair<Offset, Offset>) -> Unit,
     callBackTodoItem: (TodoEntity) -> Unit,
@@ -515,13 +495,12 @@ fun TodoItemArea(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(50.dp)
+            .height(if (isCalendarItem) 40.dp else 50.dp)
             .background(
                 color = backgroundColor,
                 shape = RoundedCornerShape(12.dp)
             )
-            .roundRippleClickable(
-                rippleColor = backgroundColor,
+            .noRippleClick(
                 onClick = {
                     showTodoEditScreen()
                     callBackTodoItem(todoItem)
@@ -532,13 +511,21 @@ fun TodoItemArea(
         Spacer(modifier = Modifier.width(10.dp))
 
         CheckBox(
+            modifier = Modifier
+                .size(if(isCalendarItem) 18.dp else 24.dp),
             checked = todoItem.isComplete,
             onCheckChanged = {
                 when(todoKind) {
-                    TodoState.PREV -> updateTodoList(todoItem.copy(isComplete = it, prevDueDate = todoItem.dueDate, dueDate = today))
+                    TodoState.PREV,
+                    TodoState.FUTURE,
+                    TodoState.TODO -> {
+                        updateTodoList(todoItem.copy(isComplete = it, prevDueDate = todoItem.dueDate, dueDate = today))
+                    }
+                    TodoState.COMPLETE,
+                    TodoState.DATE_COMPLETE -> {
+                        updateTodoList(todoItem.copy(isComplete = it, dueDate = todoItem.prevDueDate ?: today))
+                    }
                     TodoState.TODAY -> updateTodoList(todoItem.copy(isComplete = it, prevDueDate = todoItem.dueDate))
-                    TodoState.FUTURE -> updateTodoList(todoItem.copy(isComplete = it, prevDueDate = todoItem.dueDate, dueDate = today))
-                    TodoState.COMPLETE -> updateTodoList(todoItem.copy(isComplete = it, dueDate = todoItem.prevDueDate ?: today))
                 }
             }
         )
@@ -546,7 +533,8 @@ fun TodoItemArea(
         Spacer(modifier = Modifier.width(5.dp))
 
         Text(
-            text = todoItem.title ?: stringResource(R.string.does_not_exist)
+            text = todoItem.title ?: stringResource(R.string.does_not_exist),
+            fontSize = if(isCalendarItem) 15.sp else TextUnit.Unspecified
         )
 
         Spacer(modifier = Modifier.weight(1f))
@@ -556,6 +544,7 @@ fun TodoItemArea(
             contentDescription = null,
             tint = if(isDeleteMode) colorResource(R.color.black) else iconColor,
             modifier = Modifier
+                .size(if (isCalendarItem) 18.dp else 24.dp)
                 .then(
                     if (isDeleteMode) {
                         Modifier.roundRippleClickable(
@@ -578,6 +567,7 @@ fun TodoItemArea(
                 .onGloballyPositioned { layoutCoordinates ->
                     val bottomLeft = layoutCoordinates.boundsInRoot().bottomLeft
                     val topLeft = layoutCoordinates.boundsInRoot().topLeft
+
                     offset = Pair(bottomLeft, topLeft)
                 }
         )

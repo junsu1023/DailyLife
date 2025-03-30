@@ -28,6 +28,7 @@ fun Modifier.roundRippleClickable(
     )
 }
 
+@Composable
 fun Modifier.noRippleClick(
     onClick: () -> Unit
 ): Modifier = composed {
@@ -38,6 +39,7 @@ fun Modifier.noRippleClick(
     )
 }
 
+@Composable
 fun Modifier.clickableSingle(
     interactionSource: MutableInteractionSource,
     indication: Indication?,
