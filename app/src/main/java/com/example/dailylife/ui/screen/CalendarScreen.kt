@@ -122,22 +122,24 @@ fun CalendarScreen(
             modifier = Modifier
                 .background(colorResource(R.color.ivory))
                 .pointerInput(Unit) {
-                    detectVerticalDragGestures(onVerticalDrag = { change, dragAmount ->
-                        change.consume()
-                        calendarHeight = (calendarHeight + dragAmount.toDp()).coerceIn(halfHeight, fullHeight)
-                    }, onDragEnd = {
-                        when (calendarState.calendarSize) {
-                            CalendarSize.HALF -> if (calendarHeight > halfHeight) {
-                                calendarState.calendarSize = CalendarSize.FULL
-                                calendarHeight = fullHeight
-                            }
-
-                            CalendarSize.FULL -> if (calendarHeight < fullHeight) {
-                                calendarState.calendarSize = CalendarSize.HALF
-                                calendarHeight = halfHeight
+                    detectVerticalDragGestures(
+                        onVerticalDrag = { change, dragAmount ->
+                            change.consume()
+                            calendarHeight = (calendarHeight + dragAmount.toDp()).coerceIn(halfHeight, fullHeight)
+                        },
+                        onDragEnd = {
+                            when (calendarState.calendarSize) {
+                                CalendarSize.HALF -> if (calendarHeight > halfHeight) {
+                                    calendarState.calendarSize = CalendarSize.FULL
+                                    calendarHeight = fullHeight
+                                }
+                                CalendarSize.FULL -> if (calendarHeight < fullHeight) {
+                                    calendarState.calendarSize = CalendarSize.HALF
+                                    calendarHeight = halfHeight
+                                }
                             }
                         }
-                    })
+                    )
                 }
         ) {
             CalendarArea(
