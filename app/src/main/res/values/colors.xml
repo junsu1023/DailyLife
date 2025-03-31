@@ -8,7 +8,6 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-
     <color name="bone">#FFD9DFC6</color>
     <color name="ivory">#FFFFFDF0</color>
     <color name="blond">#FFFFF2C2</color>
@@ -30,4 +29,5 @@
     <color name="red">#FF0000</color>
     <color name="dark_gray">#FF444444</color>
     <color name="calendar_divider">#FFE0E0E0</color>
+    <color name="medium_blue">#FF0D0DD3</color>
 </resources>

@@ -585,7 +585,7 @@ fun AddTodoButtonArea(
     onClick: () -> Unit
 ) {
     Icon(
-        painter = painterResource(R.drawable.add_todo),
+        painter = painterResource(R.drawable.add2),
         contentDescription = null,
         tint = colorResource(R.color.gray_asparagus),
         modifier = modifier
