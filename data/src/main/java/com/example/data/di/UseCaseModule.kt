@@ -3,6 +3,7 @@ package com.example.data.di
 import com.example.domain.repository.TodoRepository
 import com.example.domain.usecase.AddTodoUseCase
 import com.example.domain.usecase.DeleteTodoUseCase
+import com.example.domain.usecase.GetAllTodoListUseCase
 import com.example.domain.usecase.GetCompleteTodoListOfDateUseCase
 import com.example.domain.usecase.GetTodoListOfDateUseCase
 import com.example.domain.usecase.GetTodoListOfFutureUseCase
@@ -18,6 +19,9 @@ import dagger.hilt.components.SingletonComponent
 @Module
 @InstallIn(SingletonComponent::class)
 object UseCaseModule {
+    @Provides
+    fun provideGetAllTodoListUseCase(todoRepository: TodoRepository) = GetAllTodoListUseCase(todoRepository)
+
     @Provides
     fun provideGetTodoListOfTodayUseCase(todoRepository: TodoRepository) = GetTodoListOfTodayUseCase(todoRepository)
 

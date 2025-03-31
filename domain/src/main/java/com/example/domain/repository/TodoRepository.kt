@@ -3,6 +3,8 @@ package com.example.domain.repository
 import com.example.domain.model.TodoModel
 
 interface TodoRepository {
+    suspend fun getAllTodoList(): List<TodoModel>
+
     suspend fun getTodoListOfToday(): List<TodoModel>
 
     suspend fun getTodoListOfFuture(): List<TodoModel>
@@ -10,8 +12,6 @@ interface TodoRepository {
     suspend fun getCompleteTodoListOfToday(): List<TodoModel>
 
     suspend fun getTodoListOfPrev(): List<TodoModel>
-
-    suspend fun getTodoListOfMonth(month: Int): List<TodoModel>
 
     suspend fun getTodoListOfDate(date: String): List<TodoModel>
 

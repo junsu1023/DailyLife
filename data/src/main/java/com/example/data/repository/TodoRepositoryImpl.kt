@@ -11,6 +11,9 @@ import javax.inject.Inject
 class TodoRepositoryImpl @Inject constructor(
     private val todoDataSource: TodoDataSource
 ): TodoRepository {
+    override suspend fun getAllTodoList(): List<TodoModel> =
+        todoDataSource.getAllTodoList().map { it.convertTodoModel() }
+
     override suspend fun getTodoListOfToday(): List<TodoModel> =
         todoDataSource.getTodoListOfToday().map { it.convertTodoModel() }
 
@@ -22,9 +25,6 @@ class TodoRepositoryImpl @Inject constructor(
 
     override suspend fun getTodoListOfPrev(): List<TodoModel> =
         todoDataSource.getTodoListOfPrev().map { it.convertTodoModel() }
-
-    override suspend fun getTodoListOfMonth(month: Int): List<TodoModel> =
-        todoDataSource.getTodoListOfMonth(month).map { it.convertTodoModel() }
 
     override suspend fun getTodoListOfDate(date: String): List<TodoModel> =
         todoDataSource.getTodoListOfDate(date).map { it.convertTodoModel() }

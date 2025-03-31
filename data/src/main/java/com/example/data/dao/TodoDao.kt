@@ -10,6 +10,9 @@ import com.example.data.entitiy.TodoEntity
 
 @Dao
 interface TodoDao {
+    @Query("select * from `todo_list.db`")
+    fun getAllTodoList(): List<TodoEntity>
+
     @Query("select * from `todo_list.db` where dueDate = date('now', 'localtime') and isComplete == false")
     fun getTodoListOfToday(): List<TodoEntity>
 
@@ -27,9 +30,6 @@ interface TodoDao {
 
     @Query("select * from `todo_list.db` where dueDate = :date and isComplete == true")
     fun getCompleteTodoListOfDate(date: String): List<TodoEntity>
-
-    @Query("select * from `todo_list.db` where substr(dueDate, 6, 7) = :month")
-    fun getTodoListOfMonth(month: Int): List<TodoEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun addTodoEntity(todoEntity: TodoEntity)

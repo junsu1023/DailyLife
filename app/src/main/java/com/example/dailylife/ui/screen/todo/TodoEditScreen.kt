@@ -26,8 +26,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.core.event.Event
 import com.example.dailylife.R
 import com.example.dailylife.component.TextField
+import com.example.dailylife.state.CalendarState
+import com.example.dailylife.util.convertString
 import com.example.dailylife.util.noRippleClick
 import com.example.dailylife.util.roundRippleClickable
 import com.example.dailylife.viewmodel.TodoViewModel
@@ -38,6 +41,7 @@ fun TodoEditScreen(
     modifier: Modifier,
     todoItem: TodoEntity,
     todoViewModel: TodoViewModel,
+    calendarState: CalendarState? = null,
     hideTodoEditScreen: () -> Unit,
     showBlankSnackBar: () -> Unit,
     onClick: () -> Unit
@@ -47,16 +51,13 @@ fun TodoEditScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .noRippleClick(
-                onClick = onClick
-            )
+            .noRippleClick(onClick = onClick)
     ) {
         Column(
             modifier = modifier
                 .padding(horizontal = 10.dp)
                 .background(
-                    color = colorResource(R.color.white),
-                    shape = RoundedCornerShape(15.dp)
+                    color = colorResource(R.color.white), shape = RoundedCornerShape(15.dp)
                 )
         ) {
             var text by remember { mutableStateOf(todoItem.title) }
@@ -137,6 +138,13 @@ fun TodoEditScreen(
                                             dueDate = date
                                         )
                                     )
+
+                                    if(calendarState != null) {
+                                        todoViewModel.run {
+                                            setSelectedDate(calendarState.selectedDate.convertString())
+                                            publishEvent(Event.NeedRefresh)
+                                        }
+                                    }
                                 }
 
                                 hideTodoEditScreen()

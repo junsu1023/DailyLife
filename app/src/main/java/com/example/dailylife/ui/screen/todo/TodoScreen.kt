@@ -3,7 +3,10 @@ package com.example.dailylife.ui.screen.todo
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -63,7 +66,6 @@ import com.example.dailylife.component.TodoSnackBar
 import com.example.dailylife.state.TodoState
 import com.example.dailylife.util.convertDrawableToBitMap
 import com.example.dailylife.util.getToday
-import com.example.dailylife.util.noRippleClick
 import com.example.dailylife.util.roundRippleClickable
 import com.example.dailylife.viewmodel.TodoViewModel
 import com.example.data.entitiy.TodoEntity
@@ -325,7 +327,6 @@ fun TodoListContent(
     val todayCompleteTodoList by todoViewModel.completeTodoListOfToday.collectAsStateWithLifecycle()
     val todoListKind = arrayOf(prevTodoList, todayTodoList, futureTodoList, todayCompleteTodoList)
     val todoState = arrayOf(TodoState.PREV, TodoState.TODAY, TodoState.FUTURE, TodoState.COMPLETE)
-    val date by todoViewModel.selectedDate.collectAsStateWithLifecycle()
 
     val scrollState = rememberScrollState()
 
@@ -351,7 +352,6 @@ fun TodoListContent(
                     state = todoState[idx],
                     list = todoListKind[idx],
                     isDeleteMode = isDeleteMode,
-                    date = date,
                     updateTodoList = { todoViewModel.updateTodoList(it) },
                     callBackOffset = callBackOffset,
                     callBackHeaderHeight = callBackHeaderHeight,
@@ -369,7 +369,6 @@ fun TodoBundle(
     state: TodoState,
     list: List<TodoEntity>,
     isDeleteMode: Boolean,
-    date: String,
     updateTodoList: (TodoEntity) -> Unit,
     callBackOffset: (Pair<Offset, Offset>) -> Unit,
     callBackHeaderHeight: (Float) -> Unit,
@@ -379,7 +378,6 @@ fun TodoBundle(
 ) {
     TodoListHeader(
         state = state,
-        date = date,
         callBackHeaderHeight = callBackHeaderHeight
     ) {
         list.forEach { todo ->
@@ -402,7 +400,6 @@ fun TodoBundle(
 @Composable
 fun TodoListHeader(
     state: TodoState,
-    date: String,
     callBackHeaderHeight: (Float) -> Unit,
     content: @Composable (() -> Unit)
 ) {
@@ -473,6 +470,7 @@ fun TodoExpandButton(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TodoItemArea(
     todoKind: TodoState,
@@ -500,10 +498,15 @@ fun TodoItemArea(
                 color = backgroundColor,
                 shape = RoundedCornerShape(12.dp)
             )
-            .noRippleClick(
+            .combinedClickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
                 onClick = {
                     showTodoEditScreen()
                     callBackTodoItem(todoItem)
+                },
+                onLongClick = {
+                    if(isCalendarItem) callBackShowDialogState()
                 }
             ),
         verticalAlignment = Alignment.CenterVertically

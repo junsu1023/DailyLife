@@ -6,6 +6,8 @@ import com.example.data.entitiy.TodoEntity
 class TodoDataSource(
     private val todoListDao: TodoDao,
 ) {
+    fun getAllTodoList(): List<TodoEntity> = todoListDao.getAllTodoList()
+
     fun getTodoListOfToday(): List<TodoEntity> = todoListDao.getTodoListOfToday()
 
     fun getTodoListOfFuture(): List<TodoEntity> = todoListDao.getTodoListOfFuture()
@@ -17,8 +19,6 @@ class TodoDataSource(
     fun getTodoListOfDate(date: String): List<TodoEntity> = todoListDao.getTodoListOfDate(date)
 
     fun getCompleteTodoListOfDate(date: String): List<TodoEntity> = todoListDao.getCompleteTodoListOfDate(date)
-
-    fun getTodoListOfMonth(month: Int): List<TodoEntity> = todoListDao.getTodoListOfMonth(month)
 
     fun addTodoEntity(todoEntity: TodoEntity) = todoListDao.addTodoEntity(todoEntity)
 

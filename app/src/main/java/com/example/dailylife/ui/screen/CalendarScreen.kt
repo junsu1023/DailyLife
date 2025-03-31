@@ -16,12 +16,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,6 +43,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -51,7 +54,9 @@ import androidx.core.content.ContextCompat.getString
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.core.event.Event
 import com.example.dailylife.R
+import com.example.dailylife.component.CheckDeleteDialog
 import com.example.dailylife.component.IconSelectorContainer
+import com.example.dailylife.component.TodoBottomSheet
 import com.example.dailylife.component.TodoDatePickerDialog
 import com.example.dailylife.component.TodoSnackBar
 import com.example.dailylife.state.CalendarSize
@@ -62,6 +67,7 @@ import com.example.dailylife.ui.screen.todo.TodoEditScreen
 import com.example.dailylife.ui.screen.todo.TodoItemArea
 import com.example.dailylife.ui.screen.todo.TodoListHeader
 import com.example.dailylife.util.convertString
+import com.example.dailylife.util.roundRippleClickable
 import com.example.dailylife.viewmodel.TodoViewModel
 import com.example.data.entitiy.TodoEntity
 import com.example.domain.state.TodoFailedState
@@ -86,6 +92,8 @@ fun CalendarScreen(
 
         var isShowSelectContainer by remember { mutableStateOf(false) }
         var isShowTodoEditScreen by remember { mutableStateOf(false) }
+        var isShowBottomSheet by remember { mutableStateOf(false) }
+        var isShowCheckDeleteDialog by remember { mutableStateOf(false) }
         val todoDialogState by todoViewModel.todoDialogState.collectAsStateWithLifecycle()
 
         var selectorContainerOffset by remember { mutableStateOf(Pair(Offset.Zero, Offset.Zero)) }
@@ -114,28 +122,22 @@ fun CalendarScreen(
             modifier = Modifier
                 .background(colorResource(R.color.ivory))
                 .pointerInput(Unit) {
-                    detectVerticalDragGestures(
-                        onVerticalDrag = { change, dragAmount ->
-                            change.consume()
-                            calendarHeight = (calendarHeight + dragAmount.toDp()).coerceIn(
-                                halfHeight,
-                                fullHeight
-                            )
-                        },
-                        onDragEnd = {
-                            when (calendarState.calendarSize) {
-                                CalendarSize.HALF -> if (calendarHeight > halfHeight) {
-                                    calendarState.calendarSize = CalendarSize.FULL
-                                    calendarHeight = fullHeight
-                                }
+                    detectVerticalDragGestures(onVerticalDrag = { change, dragAmount ->
+                        change.consume()
+                        calendarHeight = (calendarHeight + dragAmount.toDp()).coerceIn(halfHeight, fullHeight)
+                    }, onDragEnd = {
+                        when (calendarState.calendarSize) {
+                            CalendarSize.HALF -> if (calendarHeight > halfHeight) {
+                                calendarState.calendarSize = CalendarSize.FULL
+                                calendarHeight = fullHeight
+                            }
 
-                                CalendarSize.FULL -> if (calendarHeight < fullHeight) {
-                                    calendarState.calendarSize = CalendarSize.HALF
-                                    calendarHeight = halfHeight
-                                }
+                            CalendarSize.FULL -> if (calendarHeight < fullHeight) {
+                                calendarState.calendarSize = CalendarSize.HALF
+                                calendarHeight = halfHeight
                             }
                         }
-                    )
+                    })
                 }
         ) {
             CalendarArea(
@@ -144,6 +146,7 @@ fun CalendarScreen(
                     .height(animatedHeight),
                 calendarState = calendarState,
                 todoViewModel = todoViewModel,
+                showAddBottomSheet = { isShowBottomSheet = true },
                 onClick = {
                     calendarState.calendarSize = CalendarSize.HALF
                     calendarHeight = halfHeight
@@ -164,19 +167,15 @@ fun CalendarScreen(
             ) {
                 DayDiffInfoArea(calendarState)
 
-                val todoListOfDate by todoViewModel.todoListOfDate.collectAsStateWithLifecycle()
-                val completeTodoListOfDate by todoViewModel.completeTodoListOfDate.collectAsStateWithLifecycle()
-                val todoList = arrayOf(todoListOfDate to TodoState.TODO, completeTodoListOfDate to TodoState.DATE_COMPLETE)
-
                 TodoListOfDateArea(
                     todoViewModel = todoViewModel,
-                    todoList = todoList,
                     callBackOffset = {
                         selectorContainerOffset = it
                         isShowSelectContainer = true
                     },
                     callBackHeaderHeight = { headerHeight = it },
                     callBackTodoItem = { updateTodoItem = it },
+                    callBackShowDialogState = { isShowCheckDeleteDialog = true },
                     showTodoEditScreen = { isShowTodoEditScreen = true }
                 )
             }
@@ -196,6 +195,29 @@ fun CalendarScreen(
             )
         }
 
+        if(isShowBottomSheet) {
+            TodoBottomSheet(
+                todoViewModel = todoViewModel,
+                closeSheet = { isShowBottomSheet = false },
+                onSaveTodo = { todoItem ->
+                    todoViewModel.addTodoList(todoItem)
+                },
+                showBlankSnackBar = { showSnackbarMessage = getString(context, R.string.blank_text) },
+            )
+        }
+
+        if(isShowTodoEditScreen) {
+            TodoEditScreen(
+                modifier = Modifier.align(Alignment.Center),
+                todoItem = updateTodoItem!!,
+                todoViewModel = todoViewModel,
+                calendarState = calendarState,
+                hideTodoEditScreen = { isShowTodoEditScreen = false },
+                showBlankSnackBar = { showSnackbarMessage = getString(context, R.string.blank_text) },
+                onClick = { isShowTodoEditScreen = false }
+            )
+        }
+
         if(todoDialogState.isShowDialog) {
             TodoDatePickerDialog(
                 selectedDate = todoDialogState.selectedDate,
@@ -210,22 +232,25 @@ fun CalendarScreen(
             )
         }
 
-        if(isShowTodoEditScreen) {
-            TodoEditScreen(
-                modifier = Modifier.align(Alignment.Center),
-                todoItem = updateTodoItem!!,
-                todoViewModel = todoViewModel,
-                hideTodoEditScreen = { isShowTodoEditScreen = false },
-                showBlankSnackBar = { showSnackbarMessage = getString(context, R.string.blank_text) },
-                onClick = { isShowTodoEditScreen = false }
-            )
-        }
-
         if(showSnackbarMessage != null) {
             TodoSnackBar(
                 modifier = Modifier.align(Alignment.BottomCenter),
                 message = showSnackbarMessage!!,
                 changedState = { showSnackbarMessage = null }
+            )
+        }
+
+        if(isShowCheckDeleteDialog) {
+            CheckDeleteDialog(
+                title = stringResource(R.string.delete_dialog_title),
+                description = stringResource(R.string.delete_dialog_description),
+                onClickCancel = {
+                    isShowCheckDeleteDialog = false
+                },
+                onClickConfirm = {
+                    todoViewModel.deleteTodoList(updateTodoItem!!)
+                    isShowCheckDeleteDialog = false
+                }
             )
         }
     }
@@ -236,6 +261,7 @@ fun CalendarArea(
     modifier: Modifier,
     calendarState: CalendarState,
     todoViewModel: TodoViewModel,
+    showAddBottomSheet: () -> Unit,
     onClick: () -> Unit,
     callBackTopBarHeight: (Float) -> Unit,
 ) {
@@ -255,11 +281,14 @@ fun CalendarArea(
         }
     }
 
+    val allTodoList by todoViewModel.allTodoList.collectAsStateWithLifecycle()
+
     Column(
         modifier = modifier.fillMaxSize()
     ) {
         CalendarHeader(
             pageYearAndMonth = calendarState.currentPageYM,
+            showAddBottomSheet = showAddBottomSheet,
             callBackTopBarHeight = callBackTopBarHeight
         )
 
@@ -305,6 +334,8 @@ fun CalendarArea(
                                     isToday = isToday,
                                     isSelected = isSelected,
                                     isVisibleMonth = isVisibleMonth,
+                                    count = allTodoList.count { it.dueDate == day.convertString() },
+                                    completeCount = allTodoList.count { it.dueDate == day.convertString() && it.isComplete },
                                     onClick = {
                                         calendarState.selectedDate = day
                                         onClick()
@@ -329,6 +360,7 @@ fun CalendarArea(
 @Composable
 fun CalendarHeader(
     pageYearAndMonth: YearMonth,
+    showAddBottomSheet: () -> Unit,
     callBackTopBarHeight: (Float) -> Unit,
 ) {
     Box(
@@ -346,6 +378,21 @@ fun CalendarHeader(
             fontSize = 22.sp,
             fontWeight = FontWeight.SemiBold
         )
+
+        Row(
+            modifier = Modifier.align(Alignment.CenterEnd)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.add),
+                contentDescription = null,
+                modifier = Modifier.roundRippleClickable(
+                    rippleColor = colorResource(R.color.black),
+                    onClick = showAddBottomSheet
+                )
+            )
+
+            Spacer(modifier = Modifier.width(10.dp))
+        }
     }
 }
 
@@ -392,6 +439,8 @@ fun CalendarDay(
     isToday: Boolean,
     isSelected: Boolean,
     isVisibleMonth: Boolean,
+    count: Int,
+    completeCount: Int,
     onClick: () -> Unit
 ) {
     val red = colorResource(R.color.red)
@@ -442,6 +491,46 @@ fun CalendarDay(
                     color = textColor
                 )
             }
+
+            if(count != 0) {
+                Spacer(modifier = Modifier.height(10.dp))
+                TodoCountArea(
+                    todoCount = count,
+                    completeCount = completeCount,
+                    isVisibleMonth = isVisibleMonth
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun TodoCountArea(
+    todoCount: Int,
+    completeCount: Int,
+    isVisibleMonth: Boolean
+) {
+    if(todoCount == completeCount) {
+        Icon(
+            painter = painterResource(R.drawable.all_complete),
+            contentDescription = null,
+            tint = if(isVisibleMonth) colorResource(R.color.gray_asparagus) else colorResource(R.color.gray_asparagus2)
+        )
+    } else if(todoCount != 0) {
+        Box(
+            modifier = Modifier
+                .size(24.dp)
+                .background(
+                    color = if (isVisibleMonth) colorResource(R.color.gray_asparagus) else colorResource(R.color.gray_asparagus2),
+                    shape = CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "+${todoCount - completeCount}",
+                color = colorResource(R.color.white),
+                fontSize = 10.sp
+            )
         }
     }
 }
@@ -477,14 +566,16 @@ fun DayDiffInfoArea(
 @Composable
 fun TodoListOfDateArea(
     todoViewModel: TodoViewModel,
-    todoList: Array<Pair<List<TodoEntity>, TodoState>>,
     callBackOffset: (Pair<Offset, Offset>) -> Unit,
     callBackHeaderHeight: (Float) -> Unit,
     callBackTodoItem: (TodoEntity) -> Unit,
-    showTodoEditScreen: () -> Unit
+    callBackShowDialogState: () -> Unit,
+    showTodoEditScreen: () -> Unit,
 ) {
     val scrollState = rememberScrollState()
-    val date by todoViewModel.selectedDate.collectAsStateWithLifecycle()
+    val todoListOfDate by todoViewModel.todoListOfDate.collectAsStateWithLifecycle()
+    val completeTodoListOfDate by todoViewModel.completeTodoListOfDate.collectAsStateWithLifecycle()
+    val todoList = arrayOf(todoListOfDate to TodoState.TODO, completeTodoListOfDate to TodoState.DATE_COMPLETE)
 
     Column(
         modifier = Modifier
@@ -495,12 +586,12 @@ fun TodoListOfDateArea(
             if(list.first.isNotEmpty()) {
                 CalendarTodoBundle(
                     kind = list.second,
-                    date = date,
                     list = list.first,
                     updateTodoList = { todoViewModel.updateTodoList(it) },
                     callBackOffset = callBackOffset,
                     callBackHeaderHeight = callBackHeaderHeight,
                     callBackTodoItem = callBackTodoItem,
+                    callBackShowDialogState = callBackShowDialogState,
                     showTodoEditScreen = showTodoEditScreen
                 )
             }
@@ -511,17 +602,16 @@ fun TodoListOfDateArea(
 @Composable
 fun CalendarTodoBundle(
     kind: TodoState,
-    date: String,
     list: List<TodoEntity>,
     updateTodoList: (TodoEntity) -> Unit,
     callBackOffset: (Pair<Offset, Offset>) -> Unit,
     callBackHeaderHeight: (Float) -> Unit,
     callBackTodoItem: (TodoEntity) -> Unit,
+    callBackShowDialogState: () -> Unit,
     showTodoEditScreen: () -> Unit
 ) {
     TodoListHeader(
         state = kind,
-        date = date,
         callBackHeaderHeight = callBackHeaderHeight
     ) {
         list.forEach { todo ->
@@ -532,7 +622,7 @@ fun CalendarTodoBundle(
                 updateTodoList = updateTodoList,
                 callBackOffset = callBackOffset,
                 callBackTodoItem = callBackTodoItem,
-                callBackShowDialogState = { },
+                callBackShowDialogState = callBackShowDialogState,
                 showTodoEditScreen = showTodoEditScreen
             )
 

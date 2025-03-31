@@ -11,6 +11,7 @@ import com.example.data.mapper.convertTodoEntity
 import com.example.data.mapper.convertTodoModel
 import com.example.domain.usecase.AddTodoUseCase
 import com.example.domain.usecase.DeleteTodoUseCase
+import com.example.domain.usecase.GetAllTodoListUseCase
 import com.example.domain.usecase.GetCompleteTodoListOfDateUseCase
 import com.example.domain.usecase.GetTodoListOfFutureUseCase
 import com.example.domain.usecase.GetTodoListOfPrevUseCase
@@ -25,12 +26,12 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 @HiltViewModel
 class TodoViewModel @Inject constructor(
+    private val getAllTodoListUseCase: GetAllTodoListUseCase,
     private val getTodoListOfTodayUseCase: GetTodoListOfTodayUseCase,
     private val getTodoListOfFutureUseCase: GetTodoListOfFutureUseCase,
     private val getCompleteTodoListOfTodayUseCase: GetCompleteTodoListOfTodayUseCase,
@@ -41,6 +42,9 @@ class TodoViewModel @Inject constructor(
     private val deleteTodoUseCase: DeleteTodoUseCase,
     private val updateTodoListUseCase: UpdateTodoListUseCase
 ): BaseViewModel() {
+    private val _allTodoList = MutableStateFlow<List<TodoEntity>>(emptyList())
+    val allTodoList: StateFlow<List<TodoEntity>> get() = _allTodoList.asStateFlow()
+
     private val _todoListOfToday = MutableStateFlow<List<TodoEntity>>(emptyList())
     val todoListOfToday: StateFlow<List<TodoEntity>> get() = _todoListOfToday.asStateFlow()
 
@@ -79,6 +83,12 @@ class TodoViewModel @Inject constructor(
         }
     }
 
+    private fun getAllTodoList() = onIO {
+        _allTodoList.update {
+            getAllTodoListUseCase().map { it.convertTodoEntity() }
+        }
+    }
+
     private fun getTodayTodoList() = onIO {
         _todoListOfToday.update {
             getTodoListOfTodayUseCase().map { it.convertTodoEntity() }
@@ -107,13 +117,13 @@ class TodoViewModel @Inject constructor(
 
     private fun getTodoListOfDate() = onIO {
         _todoListOfDate.update {
-            getTodoListOfDateUseCase(selectedDate.value).map { it.convertTodoEntity() }
+            getTodoListOfDateUseCase(_selectedDate.value).map { it.convertTodoEntity() }
         }
     }
 
     private fun getCompleteTodoListOfDate() = onIO {
         _completeTodoListOfDate.update {
-            getCompleteTodoListOfDateUseCase(selectedDate.value).map { it.convertTodoEntity() }
+            getCompleteTodoListOfDateUseCase(_selectedDate.value).map { it.convertTodoEntity() }
         }
     }
 
@@ -142,6 +152,7 @@ class TodoViewModel @Inject constructor(
     }
 
     private fun refreshTodoList() {
+        getAllTodoList()
         getTodayTodoList()
         getFutureTodoList()
         getTodayCompleteTodoList()
