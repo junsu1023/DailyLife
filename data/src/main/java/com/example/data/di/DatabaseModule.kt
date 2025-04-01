@@ -2,6 +2,7 @@ package com.example.data.di
 
 import android.content.Context
 import androidx.room.Room
+import com.example.data.database.AccountDatabase
 import com.example.data.database.TodoDatabase
 import dagger.Module
 import dagger.Provides
@@ -24,4 +25,16 @@ object DatabaseModule {
 
     @Provides
     fun provideTodoListDao(todoDatabase: TodoDatabase) = todoDatabase.todoDao()
+
+    @Provides
+    @Singleton
+    fun provideAccountDatabase(@ApplicationContext context: Context): AccountDatabase =
+        Room.databaseBuilder(
+            context = context,
+            klass = AccountDatabase::class.java,
+            name = "account_db"
+        ).build()
+
+    @Provides
+    fun provideAccountDao(accountDatabase: AccountDatabase) = accountDatabase.accountDao()
 }

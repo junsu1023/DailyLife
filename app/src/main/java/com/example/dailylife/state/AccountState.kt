@@ -1,6 +1,6 @@
 package com.example.dailylife.state
 
-enum class ConsumptionState {
+enum class AccountState {
     INCOME,
     EXPEND,
     TOTAL

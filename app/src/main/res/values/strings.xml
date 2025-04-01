@@ -2,6 +2,9 @@
     <string name="app_name">DailyLife</string>
     <string name="title_activity_main">MainActivity</string>
 
+    <!-- common -->
+    <string name="error">에러</string>
+
     <!-- TODO -->
     <string name="todo_list">Todo</string>
     <string name="calendar">Calendar</string>
@@ -47,7 +50,13 @@
     <string name="calendar_yesterday">어제</string>
     <string name="calendar_before">일 전</string>
     <string name="calendar_after">일 후</string>
+
+    <!-- Account -->
     <string name="income">수입</string>
     <string name="expend">지출</string>
     <string name="total">합계</string>
+    <string name="date">날짜</string>
+    <string name="cost">금액</string>
+    <string name="classification">분류</string>
+    <string name="content">내용</string>
 </resources>

@@ -1,4 +1,4 @@
-package com.example.dailylife.ui.screen
+package com.example.dailylife.ui.screen.account
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -13,10 +13,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
@@ -26,12 +31,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.example.dailylife.R
-import com.example.dailylife.state.ConsumptionState
+import com.example.dailylife.navigation.DailyLifeScreen
+import com.example.dailylife.state.AccountState
+import com.example.dailylife.util.convertString
+import com.example.dailylife.util.headerModifier
 import com.example.dailylife.util.roundRippleClickable
+import com.example.dailylife.viewmodel.AccountViewModel
+import java.time.YearMonth
 
 @Composable
-fun AccountScreen() {
+fun AccountScreen(
+    navController: NavController,
+    accountViewModel: AccountViewModel
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -40,32 +55,50 @@ fun AccountScreen() {
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            AccountTopBarArea()
+            val currentYM by accountViewModel.currentYM.collectAsStateWithLifecycle()
+
+            AccountTopBarArea(
+                ym = currentYM,
+                increaseMonth = { accountViewModel.increaseCurrentYM() },
+                decreaseMonth = { accountViewModel.decreaseCurrentYM() }
+            )
 
             HorizontalDivider()
 
-            ConsumptionInformationArea()
+            AccountInfoArea()
 
             HorizontalDivider()
 
             AccountContentArea(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                accountViewModel = accountViewModel
             )
         }
-
 
         AccountAddButton(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(bottom = 20.dp, end = 10.dp),
-            onClick = { }
+            onClick = {
+                navController.navigate(DailyLifeScreen.AddAccount.name) {
+                    navController.graph.startDestinationRoute?.let {
+                        popUpTo(it) {
+                            saveState = true
+                        }
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            }
         )
     }
 }
 
 @Composable
 private fun AccountTopBarArea(
-//    ym: YearMonth
+    ym: YearMonth,
+    increaseMonth: () -> Unit,
+    decreaseMonth: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -84,10 +117,14 @@ private fun AccountTopBarArea(
             Icon(
                 painter = painterResource(R.drawable.before),
                 contentDescription = null,
+                modifier = Modifier.roundRippleClickable(
+                    rippleColor = colorResource(R.color.black),
+                    onClick = decreaseMonth
+                )
             )
 
             Text(
-                text = "2025년 3월",
+                text = ym.convertString(),
                 fontWeight = FontWeight.Normal,
                 textAlign = TextAlign.Center,
                 fontSize = 20.sp,
@@ -95,16 +132,20 @@ private fun AccountTopBarArea(
 
             Icon(
                 painter = painterResource(R.drawable.next),
-                contentDescription = null
+                contentDescription = null,
+                modifier = Modifier.roundRippleClickable(
+                    rippleColor = colorResource(R.color.black),
+                    onClick = increaseMonth
+                )
             )
         }
     }
 }
 
 @Composable
-private fun ConsumptionInformationArea() {
-    // 금액은 viewmodel에서 관리? 생각해봐야함
-    val consumptionInfo = arrayOf(ConsumptionState.INCOME to 0, ConsumptionState.EXPEND to 0, ConsumptionState.TOTAL to 0)
+private fun AccountInfoArea() {
+    // 임시
+    val consumptionInfo = arrayOf(AccountState.INCOME to 0, AccountState.EXPEND to 0, AccountState.TOTAL to 0)
 
     Row(
         modifier = Modifier
@@ -123,7 +164,7 @@ private fun ConsumptionInformationArea() {
 @Composable
 private fun InfoArea(
     modifier: Modifier,
-    consumption: Pair<ConsumptionState, Int>
+    consumption: Pair<AccountState, Int>
 ) {
     Column(
         modifier = modifier,
@@ -131,9 +172,9 @@ private fun InfoArea(
     ) {
         Text(
             text = when(consumption.first) {
-                ConsumptionState.INCOME -> stringResource(R.string.income)
-                ConsumptionState.EXPEND -> stringResource(R.string.expend)
-                ConsumptionState.TOTAL -> stringResource(R.string.total)
+                AccountState.INCOME -> stringResource(R.string.income)
+                AccountState.EXPEND -> stringResource(R.string.expend)
+                AccountState.TOTAL -> stringResource(R.string.total)
             },
             fontSize = 15.sp
         )
@@ -141,9 +182,9 @@ private fun InfoArea(
         Text(
             text = consumption.second.toString(),
             color = when(consumption.first) {
-                ConsumptionState.INCOME -> colorResource(R.color.medium_blue)
-                ConsumptionState.EXPEND -> colorResource(R.color.red)
-                ConsumptionState.TOTAL -> colorResource(R.color.black)
+                AccountState.INCOME -> colorResource(R.color.medium_blue)
+                AccountState.EXPEND -> colorResource(R.color.red)
+                AccountState.TOTAL -> colorResource(R.color.black)
             },
             fontSize = 15.sp
         )
@@ -170,12 +211,19 @@ private fun AccountAddButton(
 
 @Composable
 private fun AccountContentArea(
-    modifier: Modifier
+    modifier: Modifier,
+    accountViewModel: AccountViewModel
 ) {
     Box(
         modifier = modifier
     ) {
-        BlankArea()
+        val currentYMInfoList by accountViewModel.currentYMAccountList.collectAsStateWithLifecycle()
+
+        if(currentYMInfoList.isEmpty()) {
+            BlankArea()
+        } else {
+            AccountBundle()
+        }
     }
 }
 
@@ -189,5 +237,54 @@ private fun BlankArea() {
             contentDescription = null,
             modifier = Modifier.align(Alignment.Center)
         )
+    }
+}
+
+@Composable
+private fun AccountBundle() {
+
+}
+
+@Composable
+private fun AccountItemHeader(
+    day: Int,
+    dayOfWeek: String,
+    totalIncome: Long,
+    totalExpend: Long,
+    content: @Composable () -> Unit
+) {
+    var isExpanded by remember { mutableStateOf(true) }
+
+    Column(
+        modifier = Modifier.headerModifier(),
+        verticalArrangement = Arrangement.Center
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(30.dp)
+        ) {
+            Text(
+                text = day.toString(),
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Box(
+                modifier = Modifier.background(
+                    color = colorResource(R.color.gray_asparagus),
+                    shape = RoundedCornerShape(16.dp)
+                ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = dayOfWeek,
+                    fontSize = 12.sp
+                )
+            }
+        }
+
+        if(isExpanded) {
+            content()
+        }
     }
 }

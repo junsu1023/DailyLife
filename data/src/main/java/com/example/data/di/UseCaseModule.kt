@@ -1,16 +1,21 @@
 package com.example.data.di
 
+import com.example.domain.repository.AccountRepository
 import com.example.domain.repository.TodoRepository
-import com.example.domain.usecase.AddTodoUseCase
-import com.example.domain.usecase.DeleteTodoUseCase
-import com.example.domain.usecase.GetAllTodoListUseCase
-import com.example.domain.usecase.GetCompleteTodoListOfDateUseCase
-import com.example.domain.usecase.GetTodoListOfDateUseCase
-import com.example.domain.usecase.GetTodoListOfFutureUseCase
-import com.example.domain.usecase.GetTodoListOfPrevUseCase
-import com.example.domain.usecase.GetCompleteTodoListOfTodayUseCase
-import com.example.domain.usecase.GetTodoListOfTodayUseCase
-import com.example.domain.usecase.UpdateTodoListUseCase
+import com.example.domain.usecase.account.AddAccountItemUseCase
+import com.example.domain.usecase.todo.AddTodoUseCase
+import com.example.domain.usecase.account.DeleteAccountItemUseCase
+import com.example.domain.usecase.todo.DeleteTodoUseCase
+import com.example.domain.usecase.todo.GetAllTodoListUseCase
+import com.example.domain.usecase.todo.GetCompleteTodoListOfDateUseCase
+import com.example.domain.usecase.todo.GetTodoListOfDateUseCase
+import com.example.domain.usecase.todo.GetTodoListOfFutureUseCase
+import com.example.domain.usecase.todo.GetTodoListOfPrevUseCase
+import com.example.domain.usecase.todo.GetCompleteTodoListOfTodayUseCase
+import com.example.domain.usecase.account.GetCurrentYMAccountInfoUseCase
+import com.example.domain.usecase.todo.GetTodoListOfTodayUseCase
+import com.example.domain.usecase.account.UpdateAccountItemUseCase
+import com.example.domain.usecase.todo.UpdateTodoListUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -19,6 +24,7 @@ import dagger.hilt.components.SingletonComponent
 @Module
 @InstallIn(SingletonComponent::class)
 object UseCaseModule {
+    // Todo & Calendar
     @Provides
     fun provideGetAllTodoListUseCase(todoRepository: TodoRepository) = GetAllTodoListUseCase(todoRepository)
 
@@ -48,4 +54,17 @@ object UseCaseModule {
 
     @Provides
     fun provideUpdateTodoUseCase(todoRepository: TodoRepository) = UpdateTodoListUseCase(todoRepository)
+
+    // Account
+    @Provides
+    fun provideGetCurrentYMAccountInfoUseCase(accountRepository: AccountRepository) = GetCurrentYMAccountInfoUseCase(accountRepository)
+
+    @Provides
+    fun provideAddAccountItemUseCase(accountRepository: AccountRepository) = AddAccountItemUseCase(accountRepository)
+
+    @Provides
+    fun provideDeleteAccountItemUseCase(accountRepository: AccountRepository) = DeleteAccountItemUseCase(accountRepository)
+
+    @Provides
+    fun provideUpdateAccountItemUseCase(accountRepository: AccountRepository) = UpdateAccountItemUseCase(accountRepository)
 }

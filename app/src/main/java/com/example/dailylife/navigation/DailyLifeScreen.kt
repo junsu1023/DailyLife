@@ -7,7 +7,8 @@ import com.example.dailylife.R
 enum class DailyLifeScreen {
     TodoList,
     Calendar,
-    AccountBook
+    AccountBook,
+    AddAccount,
 }
 
 sealed class DailyLifeItem(
