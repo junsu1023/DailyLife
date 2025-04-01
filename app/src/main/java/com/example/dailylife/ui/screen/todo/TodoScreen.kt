@@ -66,10 +66,12 @@ import com.example.dailylife.component.TodoSnackBar
 import com.example.dailylife.state.TodoState
 import com.example.dailylife.util.convertDrawableToBitMap
 import com.example.dailylife.util.getToday
+import com.example.dailylife.util.headerModifier
 import com.example.dailylife.util.roundRippleClickable
+import com.example.dailylife.util.topBarModifier
 import com.example.dailylife.viewmodel.TodoViewModel
 import com.example.data.entitiy.TodoEntity
-import com.example.domain.state.TodoFailedState
+import com.example.domain.state.FailedState
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -106,9 +108,9 @@ fun TodoScreen(
         scope.launch {
             todoViewModel.todoItemContinuationError.collectLatest { throwable ->
                 when(throwable) {
-                    TodoFailedState.FailedAdd -> showSnackbarMessage = getString(context, R.string.failed_add_todo)
-                    TodoFailedState.FailedDelete -> showSnackbarMessage = getString(context, R.string.failed_delete_todo)
-                    TodoFailedState.FailedUpdate -> showSnackbarMessage = getString(context, R.string.failed_update_todo)
+                    FailedState.FailedAdd -> showSnackbarMessage = getString(context, R.string.failed_add_todo)
+                    FailedState.FailedDelete -> showSnackbarMessage = getString(context, R.string.failed_delete_todo)
+                    FailedState.FailedUpdate -> showSnackbarMessage = getString(context, R.string.failed_update_todo)
                 }
             }
         }
@@ -240,9 +242,7 @@ fun TodoTopBarArea(
 ) {
     Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .height(50.dp)
-            .background(colorResource(R.color.bone))
+            .topBarModifier()
             .onGloballyPositioned { layoutCoordinates ->
                 callBackTopBarHeight(layoutCoordinates.size.height.toFloat())
             }
@@ -406,16 +406,7 @@ fun TodoListHeader(
     var isExpanded by remember { mutableStateOf(true) }
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
-            .padding(horizontal = 10.dp)
-            .animateContentSize(
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioLowBouncy,
-                    stiffness = Spring.StiffnessLow
-                )
-            ),
+        modifier = Modifier.headerModifier(),
         verticalArrangement = Arrangement.Center
     ) {
         Row(

@@ -68,9 +68,10 @@ import com.example.dailylife.ui.screen.todo.TodoItemArea
 import com.example.dailylife.ui.screen.todo.TodoListHeader
 import com.example.dailylife.util.convertString
 import com.example.dailylife.util.roundRippleClickable
+import com.example.dailylife.util.topBarModifier
 import com.example.dailylife.viewmodel.TodoViewModel
 import com.example.data.entitiy.TodoEntity
-import com.example.domain.state.TodoFailedState
+import com.example.domain.state.FailedState
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
@@ -110,9 +111,9 @@ fun CalendarScreen(
             scope.launch {
                 todoViewModel.todoItemContinuationError.collectLatest { throwable ->
                     when(throwable) {
-                        TodoFailedState.FailedAdd -> showSnackbarMessage = getString(context, R.string.failed_add_todo)
-                        TodoFailedState.FailedDelete -> showSnackbarMessage = getString(context, R.string.failed_delete_todo)
-                        TodoFailedState.FailedUpdate -> showSnackbarMessage = getString(context, R.string.failed_update_todo)
+                        FailedState.FailedAdd -> showSnackbarMessage = getString(context, R.string.failed_add_todo)
+                        FailedState.FailedDelete -> showSnackbarMessage = getString(context, R.string.failed_delete_todo)
+                        FailedState.FailedUpdate -> showSnackbarMessage = getString(context, R.string.failed_update_todo)
                     }
                 }
             }
@@ -288,7 +289,7 @@ fun CalendarArea(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        CalendarHeader(
+        CalendarTopBarArea(
             pageYearAndMonth = calendarState.currentPageYM,
             showAddBottomSheet = showAddBottomSheet,
             callBackTopBarHeight = callBackTopBarHeight
@@ -360,16 +361,14 @@ fun CalendarArea(
 }
 
 @Composable
-fun CalendarHeader(
+fun CalendarTopBarArea(
     pageYearAndMonth: YearMonth,
     showAddBottomSheet: () -> Unit,
     callBackTopBarHeight: (Float) -> Unit,
 ) {
     Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .height(50.dp)
-            .background(colorResource(R.color.bone))
+            .topBarModifier()
             .onGloballyPositioned { layoutCoordinates ->
                 callBackTopBarHeight(layoutCoordinates.size.height.toFloat())
             }
