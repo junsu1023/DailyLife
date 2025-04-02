@@ -12,14 +12,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ExposedDropdownMenuDefaults.textFieldColors
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldColors
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,28 +23,40 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.example.dailylife.R
+import com.example.dailylife.component.AccountComponentTextField
 import com.example.dailylife.component.HorizontalDivider
 import com.example.dailylife.state.AccountState
+import com.example.dailylife.util.convertString
 import com.example.dailylife.util.getToday
+import com.example.dailylife.util.noRippleClick
 import com.example.dailylife.util.roundRippleClickable
 import com.example.dailylife.util.topBarModifier
 import com.example.dailylife.viewmodel.AccountViewModel
+import com.example.data.entitiy.AccountEntity
+import java.time.YearMonth
 
 @Composable
 fun AddAccountScreen(
+    navController: NavController,
     accountViewModel: AccountViewModel
 ) {
     var accountState by remember { mutableStateOf(AccountState.INCOME) }
+    val currentYM by accountViewModel.currentYM.collectAsStateWithLifecycle()
+    val clickBackButton: () -> Unit = {
+        navController.popBackStack()
+    }
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -59,7 +67,8 @@ fun AddAccountScreen(
                 AccountState.INCOME -> stringResource(R.string.income)
                 AccountState.EXPEND -> stringResource(R.string.expend)
                 else -> stringResource(R.string.error)
-            }
+            },
+            clickBackButton = clickBackButton
         )
 
         AccountButtonArea(
@@ -74,7 +83,8 @@ fun AddAccountScreen(
 
         EditInfoArea(
             modifier = Modifier.weight(1f),
-            accountState = accountState
+            accountState = accountState,
+            currentYM = currentYM
         )
     }
 }
@@ -82,7 +92,8 @@ fun AddAccountScreen(
 @Composable
 fun AddAccountTopBarArea(
     modifier: Modifier,
-    title: String
+    title: String,
+    clickBackButton: () -> Unit
 ) {
     Row(
         modifier = modifier,
@@ -93,7 +104,12 @@ fun AddAccountTopBarArea(
 
         Icon(
             painter = painterResource(R.drawable.back_arrow),
-            contentDescription = null
+            contentDescription = null,
+            modifier = Modifier
+                .roundRippleClickable(
+                    rippleColor = colorResource(R.color.black),
+                    onClick = clickBackButton
+                )
         )
 
         Text(
@@ -184,14 +200,64 @@ fun AccountButton(
 @Composable
 fun EditInfoArea(
     modifier: Modifier,
-    accountState: AccountState
+    accountState: AccountState,
+    currentYM: YearMonth
 ) {
+    val infoKind = when(accountState) {
+        AccountState.INCOME -> stringResource(R.string.income)
+        AccountState.EXPEND -> stringResource(R.string.expend)
+        else -> stringResource(R.string.error)
+    }
+    var infoDate by remember { mutableStateOf("") }
+    var infoCost by remember { mutableStateOf("") }
+    var infoClassification by remember { mutableStateOf<String?>(null) }
+    var infoContent by remember { mutableStateOf<String?>(null) }
+
     Column(
         modifier = modifier.padding(horizontal = 10.dp)
     ) {
         EditItem(
             text = stringResource(R.string.date),
-            accountState = accountState
+            subText = getToday(),
+            accountState = accountState,
+            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+            onTextChange = { infoDate = it }
+        )
+
+        EditItem(
+            text = stringResource(R.string.cost),
+            accountState = accountState,
+            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+            onTextChange = { infoCost = it }
+        )
+
+        EditItem(
+            text = stringResource(R.string.classification),
+            accountState = accountState,
+            onTextChange = { infoClassification = it }
+        )
+
+        EditItem(
+            text = stringResource(R.string.content),
+            accountState = accountState,
+            onTextChange = { infoContent = it }
+        )
+
+        HorizontalDivider()
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        SaveButton(
+            onSave = {
+                makeAccountItem(
+                    ym = currentYM,
+                    kind = infoKind,
+                    date = infoDate,
+                    cost = infoCost.substring(0, infoCost.lastIndex - 1).toLong(),
+                    classification = infoClassification,
+                    content = infoContent
+                )
+            }
         )
     }
 }
@@ -199,9 +265,13 @@ fun EditInfoArea(
 @Composable
 fun EditItem(
     text: String,
-    accountState: AccountState
+    subText: String? = null,
+    accountState: AccountState,
+    keyboardOptions: KeyboardOptions? = null,
+    onTextChange: (String) -> Unit
 ) {
-    var curDate by remember { mutableStateOf(getToday()) }
+    var content by remember { mutableStateOf(subText ?: "") }
+
     val focusedIndicatorColor = when(accountState) {
         AccountState.INCOME -> colorResource(R.color.medium_blue)
         AccountState.EXPEND -> colorResource(R.color.red)
@@ -223,21 +293,58 @@ fun EditItem(
             )
         )
 
-        Spacer(modifier = Modifier.width(10.dp))
+        Spacer(modifier = Modifier.width(20.dp))
 
-        TextField(
-            value = curDate,
-            onValueChange = { curDate = it },
-            colors = TextFieldDefaults.colors().copy(
-                focusedIndicatorColor = focusedIndicatorColor,
-                unfocusedIndicatorColor = colorResource(R.color.gray),
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent
-            ),
-            textStyle = TextStyle(
-                fontSize = 15.sp,
-                platformStyle = PlatformTextStyle(includeFontPadding = false)
-            )
+        val isCost = text == stringResource(R.string.cost)
+        AccountComponentTextField(
+            text = if(isCost && content.isNotBlank()) "${content}원" else content,
+            focusedIndicatorColor = focusedIndicatorColor,
+            keyboardOptions = keyboardOptions ?: KeyboardOptions.Default,
+            onValueChange = {
+                content = if(isCost && it.last() !in '0' .. '9') it.substring(0, it.length - 1) else it
+                onTextChange(it)
+            }
         )
     }
 }
+
+@Composable
+fun SaveButton(
+    onSave: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(30.dp)
+            .background(
+                color = colorResource(R.color.gray_asparagus3),
+                shape = RoundedCornerShape(16.dp)
+            )
+            .noRippleClick(
+                onClick = onSave
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = stringResource(R.string.save),
+            color = colorResource(R.color.white)
+        )
+    }
+}
+
+fun makeAccountItem(
+    ym: YearMonth,
+    kind: String,
+    date: String,
+    cost: Long,
+    classification: String?,
+    content: String?
+): AccountEntity =
+    AccountEntity(
+        ym = ym.convertString(),
+        kind = kind,
+        date = date,
+        cost = cost,
+        classification = classification,
+        content = content
+    )

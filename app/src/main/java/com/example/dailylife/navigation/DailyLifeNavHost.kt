@@ -70,6 +70,7 @@ fun DailyLifeNavHost(
             }
 
             AddAccountScreen(
+                navController = navController,
                 accountViewModel = accountViewModel
             )
         }
