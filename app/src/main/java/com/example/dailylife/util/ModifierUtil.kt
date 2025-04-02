@@ -6,6 +6,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Indication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,20 +18,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.dailylife.R
 
 @Composable
 fun Modifier.roundRippleClickable(
     rippleColor: Color,
+    radius: Dp? = null,
     onClick: () -> Unit
 ): Modifier = composed {
     val interactionSource = remember { MutableInteractionSource() }
     val ripple = rememberRipple(
         bounded = false,
-        color = rippleColor
+        color = rippleColor,
+        radius = radius ?: Dp.Unspecified
     )
 
     clickableSingle(
@@ -86,4 +92,20 @@ fun Modifier.topBarModifier(): Modifier = composed {
         .fillMaxWidth()
         .height(50.dp)
         .background(colorResource(R.color.bone))
+}
+
+@Composable
+fun Modifier.addFocusCleaner(
+    focusManager: FocusManager,
+    doOnClear: () -> Unit = { }
+): Modifier = composed {
+    Modifier
+        .pointerInput(Unit) {
+            detectTapGestures(
+                onTap = {
+                    doOnClear()
+                    focusManager.clearFocus()
+                }
+            )
+        }
 }
