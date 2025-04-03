@@ -23,9 +23,18 @@ fun LocalDate.convertString(): String {
     return dtf.format(this)
 }
 
-fun YearMonth.convertString(): String {
+fun YearMonth.convertTitleString(): String {
     val year = this.year
     val month = this.monthValue
 
-    return "${year} / ${month}"
+    return String.format("$year / %02d", month)
 }
+
+fun YearMonth.convertDBString(): String {
+    val year = this.year
+    val month = this.monthValue
+
+    return String.format("$year-%02d", month)
+}
+
+fun String.convertLocalDate(): LocalDate = LocalDate.parse(this, DateTimeFormatter.ISO_DATE)

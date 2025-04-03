@@ -32,20 +32,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.dailylife.R
 import com.example.dailylife.component.AccountComponentTextField
 import com.example.dailylife.component.HorizontalDivider
 import com.example.dailylife.state.AccountState
-import com.example.dailylife.util.convertString
 import com.example.dailylife.util.getToday
 import com.example.dailylife.util.noRippleClick
 import com.example.dailylife.util.roundRippleClickable
 import com.example.dailylife.util.topBarModifier
 import com.example.dailylife.viewmodel.AccountViewModel
 import com.example.data.entitiy.AccountEntity
-import java.time.YearMonth
 
 @Composable
 fun AddAccountScreen(
@@ -53,7 +50,6 @@ fun AddAccountScreen(
     accountViewModel: AccountViewModel
 ) {
     var accountState by remember { mutableStateOf(AccountState.INCOME) }
-    val currentYM by accountViewModel.currentYM.collectAsStateWithLifecycle()
     val clickBackButton: () -> Unit = {
         navController.popBackStack()
     }
@@ -84,7 +80,10 @@ fun AddAccountScreen(
         EditInfoArea(
             modifier = Modifier.weight(1f),
             accountState = accountState,
-            currentYM = currentYM
+            onSave = {
+                accountViewModel.addAccountItem(it)
+                navController.popBackStack()
+            }
         )
     }
 }
@@ -172,17 +171,13 @@ fun AccountButton(
         modifier = modifier
             .height(30.dp)
             .background(
-                color = backgroundColor,
-                shape = RoundedCornerShape(16.dp)
+                color = backgroundColor, shape = RoundedCornerShape(16.dp)
             )
             .border(
-                width = 1.dp,
-                shape = RoundedCornerShape(16.dp),
-                color = borderColor
+                width = 1.dp, shape = RoundedCornerShape(16.dp), color = borderColor
             )
             .roundRippleClickable(
-                rippleColor = colorResource(R.color.platinum),
-                onClick = onClick
+                rippleColor = colorResource(R.color.platinum), onClick = onClick
             ),
         contentAlignment = Alignment.Center
     ) {
@@ -201,7 +196,7 @@ fun AccountButton(
 fun EditInfoArea(
     modifier: Modifier,
     accountState: AccountState,
-    currentYM: YearMonth
+    onSave: (AccountEntity) -> Unit
 ) {
     val infoKind = when(accountState) {
         AccountState.INCOME -> stringResource(R.string.income)
@@ -249,13 +244,14 @@ fun EditInfoArea(
 
         SaveButton(
             onSave = {
-                makeAccountItem(
-                    ym = currentYM,
-                    kind = infoKind,
-                    date = infoDate,
-                    cost = infoCost.substring(0, infoCost.lastIndex - 1).toLong(),
-                    classification = infoClassification,
-                    content = infoContent
+                onSave(
+                    makeAccountItem(
+                        kind = infoKind,
+                        date = infoDate.takeIf { it.isNotBlank() } ?: getToday(),
+                        cost = infoCost.substring(0, infoCost.lastIndex).toLong(),
+                        classification = infoClassification,
+                        content = infoContent
+                    )
                 )
             }
         )
@@ -333,7 +329,6 @@ fun SaveButton(
 }
 
 fun makeAccountItem(
-    ym: YearMonth,
     kind: String,
     date: String,
     cost: Long,
@@ -341,7 +336,6 @@ fun makeAccountItem(
     content: String?
 ): AccountEntity =
     AccountEntity(
-        ym = ym.convertString(),
         kind = kind,
         date = date,
         cost = cost,

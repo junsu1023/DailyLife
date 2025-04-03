@@ -6,7 +6,6 @@ import com.example.domain.model.AccountModel
 fun AccountEntity.convertAccountItemModel(): AccountModel =
     AccountModel(
         this.id,
-        this.ym,
         this.kind,
         this.date,
         this.cost,
@@ -17,7 +16,6 @@ fun AccountEntity.convertAccountItemModel(): AccountModel =
 fun AccountModel.convertAccountItemEntity(): AccountEntity =
     AccountEntity(
         this.id,
-        this.ym,
         this.kind,
         this.date,
         this.cost,

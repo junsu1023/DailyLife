@@ -3,10 +3,10 @@ package com.example.dailylife.navigation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -23,6 +23,8 @@ fun DailyLifeNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController
 ) {
+    val viewModelStoreOwner = checkNotNull(LocalViewModelStoreOwner.current)
+
     NavHost(
         navController = navController,
         modifier = modifier
@@ -30,44 +32,37 @@ fun DailyLifeNavHost(
             .background(colorResource(R.color.ivory)),
         startDestination = DailyLifeScreen.TodoList.name
     ) {
-        composable(DailyLifeScreen.TodoList.name) { backStackEntry ->
-            val todoViewModel: TodoViewModel = hiltViewModel(backStackEntry)
+        composable(DailyLifeScreen.TodoList.name) {
+            val todoViewModel: TodoViewModel = hiltViewModel(viewModelStoreOwner)
 
             TodoScreen(
                 todoViewModel = todoViewModel
             )
         }
 
-        composable(DailyLifeScreen.Calendar.name) { backStackEntry ->
-            val parentEntry = remember(backStackEntry) {
-                navController.getBackStackEntry(DailyLifeScreen.TodoList.name)
-            }
-            val todoViewModel: TodoViewModel = hiltViewModel(parentEntry)
+        composable(DailyLifeScreen.Calendar.name) {
+            val todoViewModel: TodoViewModel = hiltViewModel(viewModelStoreOwner)
 
             CalendarScreen(
-                todoViewModel = todoViewModel,
+                todoViewModel = todoViewModel
             )
         }
 
-        composable(DailyLifeScreen.AccountBook.name) { backStackEntry ->
-            val accountViewModel: AccountViewModel = if(navController.previousBackStackEntry != null) {
-                hiltViewModel(navController.previousBackStackEntry!!)
-            } else {
-                hiltViewModel(backStackEntry)
-            }
+        composable(DailyLifeScreen.AccountBook.name) {
+            val accountViewModel: AccountViewModel = hiltViewModel(viewModelStoreOwner)
 
             AccountScreen(
-                navController = navController,
-                accountViewModel = accountViewModel
+                accountViewModel = accountViewModel,
+                onClickAddButton = {
+                    navController.navigate(DailyLifeScreen.AddAccount.name) {
+                        launchSingleTop = true
+                    }
+                }
             )
         }
 
-        composable(DailyLifeScreen.AddAccount.name) { backStackEntry ->
-            val accountViewModel: AccountViewModel = if(navController.previousBackStackEntry != null) {
-                hiltViewModel(navController.previousBackStackEntry!!)
-            } else {
-                hiltViewModel(backStackEntry)
-            }
+        composable(DailyLifeScreen.AddAccount.name) {
+            val accountViewModel: AccountViewModel = hiltViewModel(viewModelStoreOwner)
 
             AddAccountScreen(
                 navController = navController,
