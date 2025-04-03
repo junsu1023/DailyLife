@@ -1,8 +1,5 @@
 package com.example.dailylife.ui.screen.todo
 
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -18,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -49,6 +45,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.TextUnit
@@ -261,7 +259,12 @@ fun TodoTopBarArea(
 
             Text(
                 text = stringResource(R.string.todo_origin),
-                fontWeight = FontWeight.Bold
+                style = TextStyle(
+                    fontWeight = FontWeight.Bold,
+                    platformStyle = PlatformTextStyle(
+                        includeFontPadding = false
+                    )
+                )
             )
 
             Spacer(modifier = Modifier.width(5.dp))
@@ -278,9 +281,7 @@ fun TodoTopBarArea(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
                 .padding(end = 10.dp)
-                .roundRippleClickable(
-                    rippleColor = colorResource(R.color.black),
-                    onClick = { executeDeleteMode() })
+                .roundRippleClickable(rippleColor = colorResource(R.color.black), onClick = { executeDeleteMode() })
         )
     }
 }

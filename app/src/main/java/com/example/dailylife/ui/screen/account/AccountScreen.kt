@@ -13,11 +13,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,25 +31,30 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavController
 import com.example.dailylife.R
-import com.example.dailylife.navigation.DailyLifeScreen
+import com.example.dailylife.component.AccountCommonText
 import com.example.dailylife.state.AccountState
-import com.example.dailylife.util.convertString
+import com.example.dailylife.ui.screen.todo.TodoExpandButton
+import com.example.dailylife.util.convertLocalDate
+import com.example.dailylife.util.convertTitleString
 import com.example.dailylife.util.headerModifier
 import com.example.dailylife.util.roundRippleClickable
 import com.example.dailylife.viewmodel.AccountViewModel
+import com.example.data.entitiy.AccountEntity
 import java.time.YearMonth
+import java.util.Locale
 
 @Composable
 fun AccountScreen(
-    navController: NavController,
-    accountViewModel: AccountViewModel
+    accountViewModel: AccountViewModel,
+    onClickAddButton: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -57,6 +66,16 @@ fun AccountScreen(
         ) {
             val currentYM by accountViewModel.currentYM.collectAsStateWithLifecycle()
 
+            var totalIncome by remember { mutableStateOf(0L) }
+            var totalExpend by remember { mutableStateOf(0L) }
+            val strIncome = stringResource(R.string.income)
+            val strExpend = stringResource(R.string.expend)
+
+            LaunchedEffect(currentYM) {
+                totalIncome = accountViewModel.getTotal(strIncome)
+                totalExpend = accountViewModel.getTotal(strExpend)
+            }
+
             AccountTopBarArea(
                 ym = currentYM,
                 increaseMonth = { accountViewModel.increaseCurrentYM() },
@@ -65,7 +84,10 @@ fun AccountScreen(
 
             HorizontalDivider()
 
-            AccountInfoArea()
+            AccountInfoArea(
+                totalIncome = totalIncome,
+                totalExpend = totalExpend
+            )
 
             HorizontalDivider()
 
@@ -79,17 +101,7 @@ fun AccountScreen(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(bottom = 20.dp, end = 10.dp),
-            onClick = {
-                navController.navigate(DailyLifeScreen.AddAccount.name) {
-                    navController.graph.startDestinationRoute?.let {
-                        popUpTo(it) {
-                            saveState = true
-                        }
-                    }
-                    launchSingleTop = true
-                    restoreState = true
-                }
-            }
+            onClick = onClickAddButton
         )
     }
 }
@@ -124,10 +136,15 @@ private fun AccountTopBarArea(
             )
 
             Text(
-                text = ym.convertString(),
-                fontWeight = FontWeight.Normal,
-                textAlign = TextAlign.Center,
-                fontSize = 20.sp,
+                text = ym.convertTitleString(),
+                style = TextStyle(
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Normal,
+                    textAlign = TextAlign.Center,
+                    platformStyle = PlatformTextStyle(
+                        includeFontPadding = false
+                    )
+                )
             )
 
             Icon(
@@ -143,9 +160,15 @@ private fun AccountTopBarArea(
 }
 
 @Composable
-private fun AccountInfoArea() {
-    // 임시
-    val consumptionInfo = arrayOf(AccountState.INCOME to 0, AccountState.EXPEND to 0, AccountState.TOTAL to 0)
+private fun AccountInfoArea(
+    totalIncome: Long,
+    totalExpend: Long
+) {
+    val consumptionInfo = arrayOf(
+        AccountState.INCOME to totalIncome,
+        AccountState.EXPEND to totalExpend,
+        AccountState.TOTAL to totalIncome - totalExpend
+    )
 
     Row(
         modifier = Modifier
@@ -164,7 +187,7 @@ private fun AccountInfoArea() {
 @Composable
 private fun InfoArea(
     modifier: Modifier,
-    consumption: Pair<AccountState, Int>
+    consumption: Pair<AccountState, Long>
 ) {
     Column(
         modifier = modifier,
@@ -203,8 +226,7 @@ private fun AccountAddButton(
         modifier = modifier
             .size(40.dp)
             .roundRippleClickable(
-                rippleColor = colorResource(R.color.gray_asparagus),
-                onClick = onClick
+                rippleColor = colorResource(R.color.gray_asparagus), onClick = onClick
             )
     )
 }
@@ -217,12 +239,15 @@ private fun AccountContentArea(
     Box(
         modifier = modifier
     ) {
-        val currentYMInfoList by accountViewModel.currentYMAccountList.collectAsStateWithLifecycle()
+        val accountOfDateGroup by accountViewModel.accountOfDateGroup.collectAsStateWithLifecycle()
 
-        if(currentYMInfoList.isEmpty()) {
+        if(accountOfDateGroup.isEmpty()) {
             BlankArea()
         } else {
-            AccountBundle()
+            AccountBundle(
+                modifier = Modifier.fillMaxSize(),
+                accountOfDateGroup = accountOfDateGroup
+            )
         }
     }
 }
@@ -241,13 +266,47 @@ private fun BlankArea() {
 }
 
 @Composable
-private fun AccountBundle() {
+private fun AccountBundle(
+    modifier: Modifier,
+    accountOfDateGroup: Map<String, List<AccountEntity>>
+) {
+    val listState = rememberScrollState()
 
+    Column(
+        modifier = modifier.verticalScroll(listState)
+    ) {
+        accountOfDateGroup.forEach { dateToEntity ->
+            val curDate = dateToEntity.key
+            val curDateList = dateToEntity.value
+            val totalIncome = curDateList.filter { it.kind == stringResource(R.string.income) }.sumOf { it.cost }
+            val totalExpend = curDateList.sumOf { it.cost } - totalIncome
+
+            AccountItemHeader(
+                date = curDate.substring(5),
+                dayOfWeek = curDate.convertLocalDate().dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, Locale.KOREAN),
+                totalIncome = totalIncome,
+                totalExpend = totalExpend
+            ) {
+                curDateList.forEach { accountItem ->
+                    AccountItemBody(
+                        accountItem = accountItem
+                    )
+
+                    Spacer(modifier = Modifier.height(5.dp))
+                    HorizontalDivider(
+                        color = colorResource(R.color.platinum)
+                    )
+
+                    Spacer(modifier = Modifier.height(5.dp))
+                }
+            }
+        }
+    }
 }
 
 @Composable
 private fun AccountItemHeader(
-    day: Int,
+    date: String,
     dayOfWeek: String,
     totalIncome: Long,
     totalExpend: Long,
@@ -259,32 +318,121 @@ private fun AccountItemHeader(
         modifier = Modifier.headerModifier(),
         verticalArrangement = Arrangement.Center
     ) {
+        Spacer(modifier = Modifier.height(5.dp))
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(30.dp)
+                .height(30.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = day.toString(),
+                text = date,
                 fontWeight = FontWeight.SemiBold
             )
 
+            Spacer(modifier = Modifier.width(5.dp))
+
             Box(
                 modifier = Modifier.background(
-                    color = colorResource(R.color.gray_asparagus),
-                    shape = RoundedCornerShape(16.dp)
+                    color = colorResource(R.color.steal_blue).copy(0.3f),
+                    shape = RoundedCornerShape(12.dp)
                 ),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = dayOfWeek,
-                    fontSize = 12.sp
+                    fontSize = 10.sp
                 )
             }
+
+            TodoExpandButton(
+                isExpanded = isExpanded,
+                onClick = { isExpanded = !isExpanded }
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Text(
+                text = totalIncome.toString(),
+                style = TextStyle(
+                    color = colorResource(R.color.medium_blue),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            )
+
+            Box(
+                modifier = Modifier.width(15.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "|",
+                    style = TextStyle(
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                )
+            }
+
+            Text(
+                text = totalExpend.toString(),
+                style = TextStyle(
+                    color = colorResource(R.color.red),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            )
+
+            Spacer(modifier = Modifier.width(5.dp))
         }
 
         if(isExpanded) {
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(5.dp))
             content()
         }
+    }
+}
+
+@Composable
+fun AccountItemBody(
+    accountItem: AccountEntity
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .padding(start = 10.dp, end = 20.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        AccountCommonText(
+            text = accountItem.classification ?: stringResource(R.string.etc),
+            color = colorResource(R.color.dark_gray),
+            modifier = Modifier.width(30.dp)
+        )
+
+        Spacer(modifier = Modifier.width(15.dp))
+
+        Column {
+            AccountCommonText(
+                text = accountItem.content ?: stringResource(R.string.etc),
+                color = colorResource(R.color.dark_gray)
+            )
+
+            AccountCommonText(
+                text = "시간 넣기",
+                fontSize = 12.sp,
+                color = colorResource(R.color.dark_gray)
+            )
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        val textColor = colorResource(R.color.medium_blue).takeIf { accountItem.kind == stringResource(R.string.income) }?: colorResource(R.color.red)
+        AccountCommonText(
+            text = accountItem.cost.toString(),
+            color = textColor
+        )
     }
 }

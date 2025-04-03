@@ -2,7 +2,7 @@ package com.example.dailylife.viewmodel
 
 import com.example.core.event.Event
 import com.example.core.viewmodel.BaseViewModel
-import com.example.dailylife.util.convertString
+import com.example.dailylife.util.convertDBString
 import com.example.dailylife.util.onDefault
 import com.example.dailylife.util.onIO
 import com.example.data.entitiy.AccountEntity
@@ -40,6 +40,9 @@ class AccountViewModel @Inject constructor(
     private val _accountContinuationError = MutableSharedFlow<Throwable>()
     val accountContinuationError: SharedFlow<Throwable> get() = _accountContinuationError.asSharedFlow()
 
+    private val _accountOfDateGroup = MutableStateFlow<Map<String, List<AccountEntity>>>(emptyMap())
+    val accountOfDateGroup: StateFlow<Map<String, List<AccountEntity>>> get() = _accountOfDateGroup.asStateFlow()
+
     init {
         publishEvent(Event.NeedRefresh)
     }
@@ -47,7 +50,42 @@ class AccountViewModel @Inject constructor(
     override fun handleEvent(event: Event) {
         when(event) {
             Event.NeedRefresh -> refresh()
+            Event.NeedGroup -> groupSameDate()
             else -> { /* NONE */ }
+        }
+    }
+
+    fun getCurrentMonthAccountInfo() = onIO {
+        _currentYMAccountList.update {
+            getCurrentYMAccountInfoUseCase(_currentYM.value.convertDBString()).map { it.convertAccountItemEntity() }
+        }
+
+        groupSameDate()
+    }
+
+    fun addAccountItem(accountItem: AccountEntity) = onIO {
+        addAccountItemUseCase(accountItem.convertAccountItemModel()).onSuccess {
+            println("test-kjs: success")
+            publishEvent(Event.NeedRefresh)
+        }.onFailure {
+            println("test-kjs: it = $it")
+            _accountContinuationError.emit(it)
+        }
+    }
+
+    fun deleteAccountItem(accountItem: AccountEntity) = onIO {
+        deleteAccountItemUseCase(accountItem.convertAccountItemModel()).onSuccess {
+            publishEvent(Event.NeedRefresh)
+        }.onFailure {
+            _accountContinuationError.emit(it)
+        }
+    }
+
+    fun updateAccountItem(accountItem: AccountEntity) = onIO {
+        updateAccountItemUseCase(accountItem.convertAccountItemModel()).onSuccess {
+            publishEvent(Event.NeedRefresh)
+        }.onFailure {
+            _accountContinuationError.emit(it)
         }
     }
 
@@ -59,39 +97,25 @@ class AccountViewModel @Inject constructor(
 
     fun decreaseCurrentYM() = onDefault {
         _currentYM.update {
-            _currentYM.value.plusMonths(-1)
+            _currentYM.value.minusMonths(1)
         }
     }
 
-    fun getCurrentMonthAccountInfo() = onIO {
-        _currentYMAccountList.update {
-            getCurrentYMAccountInfoUseCase(_currentYM.value.convertString()).map { it.convertAccountItemEntity() }
-        }
-    }
+    private fun groupSameDate() {
+        val map = mutableMapOf<String, List<AccountEntity>>()
 
-    fun addAccountItem(accountItem: AccountEntity) = onIO {
-        addAccountItemUseCase(accountItem.convertAccountItemModel()).onFailure {
-            _accountContinuationError.emit(it)
-        }
+        _currentYMAccountList.value.forEach { accountInfo ->
+            val date = accountInfo.date
+            val dateList = map[date]?.toMutableList() ?: mutableListOf()
+            dateList.add(accountInfo)
 
-        publishEvent(Event.NeedRefresh)
-    }
-
-    fun deleteAccountItem(accountItem: AccountEntity) = onIO {
-        deleteAccountItemUseCase(accountItem.convertAccountItemModel()).onFailure {
-            _accountContinuationError.emit(it)
+            map[date] = dateList
         }
 
-        publishEvent(Event.NeedRefresh)
+        _accountOfDateGroup.update { map }
     }
 
-    fun updateAccountItem(accountItem: AccountEntity) = onIO {
-        updateAccountItemUseCase(accountItem.convertAccountItemModel()).onFailure {
-            _accountContinuationError.emit(it)
-        }
-
-        publishEvent(Event.NeedRefresh)
-    }
+    fun getTotal(kind: String): Long = _currentYMAccountList.value.filter { it.kind == kind }.sumOf { it.cost }
 
     fun refresh() {
         getCurrentMonthAccountInfo()

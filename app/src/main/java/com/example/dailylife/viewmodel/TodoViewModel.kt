@@ -128,27 +128,27 @@ class TodoViewModel @Inject constructor(
     }
 
     fun addTodoList(todoItem: TodoEntity) = onIO {
-        addTodoUseCase(todoItem.convertTodoModel()).onFailure {
+        addTodoUseCase(todoItem.convertTodoModel()).onSuccess {
+            publishEvent(Event.NeedRefresh)
+        }.onFailure {
             _todoItemContinuationError.emit(it)
         }
-
-        publishEvent(Event.NeedRefresh)
     }
 
     fun deleteTodoList(todoItem: TodoEntity) = onIO {
-        deleteTodoUseCase(todoItem.convertTodoModel()).onFailure {
+        deleteTodoUseCase(todoItem.convertTodoModel()).onSuccess {
+            publishEvent(Event.NeedRefresh)
+        }.onFailure {
             _todoItemContinuationError.emit(it)
         }
-
-        publishEvent(Event.NeedRefresh)
     }
 
     fun updateTodoList(todoItem: TodoEntity) = onIO {
-        updateTodoListUseCase(todoItem.convertTodoModel()).onFailure {
+        updateTodoListUseCase(todoItem.convertTodoModel()).onSuccess {
+            publishEvent(Event.NeedRefresh)
+        }.onFailure {
             _todoItemContinuationError.emit(it)
         }
-
-        publishEvent(Event.NeedRefresh)
     }
 
     private fun refreshTodoList() {
