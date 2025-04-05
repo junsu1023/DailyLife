@@ -97,12 +97,16 @@ class AccountViewModel @Inject constructor(
         _currentYM.update {
             _currentYM.value.plusMonths(1)
         }
+
+        refresh()
     }
 
     fun decreaseCurrentYM() = onDefault {
         _currentYM.update {
             _currentYM.value.minusMonths(1)
         }
+
+        refresh()
     }
 
     private fun groupSameDate() {
