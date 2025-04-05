@@ -73,6 +73,12 @@ fun AddAccountScreen(
         }
     }
 
+    LaunchedEffect(accountViewModel.accountContinuationSuccess) {
+        accountViewModel.accountContinuationSuccess.collectLatest {
+            onBackAction()
+        }
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarState) }
     ) {
@@ -265,7 +271,6 @@ fun EditInfoArea(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        println("test-kjs: infocost = $infoCost")
         SaveButton(
             onSave = {
                 onSave(

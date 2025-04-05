@@ -37,6 +37,9 @@ class AccountViewModel @Inject constructor(
     private val _currentYMAccountList = MutableStateFlow<List<AccountEntity>>(emptyList())
     val currentYMAccountList: StateFlow<List<AccountEntity>> get() = _currentYMAccountList.asStateFlow()
 
+    private val _accountContinuationSuccess = MutableSharedFlow<Unit>()
+    val accountContinuationSuccess: SharedFlow<Unit> get() = _accountContinuationSuccess.asSharedFlow()
+
     private val _accountContinuationError = MutableSharedFlow<Throwable>()
     val accountContinuationError: SharedFlow<Throwable> get() = _accountContinuationError.asSharedFlow()
 
@@ -66,6 +69,7 @@ class AccountViewModel @Inject constructor(
     fun addAccountItem(accountItem: AccountEntity) = onIO {
         addAccountItemUseCase(accountItem.convertAccountItemModel()).onSuccess {
             publishEvent(Event.NeedRefresh)
+            _accountContinuationSuccess.emit(it)
         }.onFailure {
             _accountContinuationError.emit(it)
         }
@@ -74,6 +78,7 @@ class AccountViewModel @Inject constructor(
     fun deleteAccountItem(accountItem: AccountEntity) = onIO {
         deleteAccountItemUseCase(accountItem.convertAccountItemModel()).onSuccess {
             publishEvent(Event.NeedRefresh)
+            _accountContinuationSuccess.emit(it)
         }.onFailure {
             _accountContinuationError.emit(it)
         }
@@ -82,6 +87,7 @@ class AccountViewModel @Inject constructor(
     fun updateAccountItem(accountItem: AccountEntity) = onIO {
         updateAccountItemUseCase(accountItem.convertAccountItemModel()).onSuccess {
             publishEvent(Event.NeedRefresh)
+            _accountContinuationSuccess.emit(it)
         }.onFailure {
             _accountContinuationError.emit(it)
         }
