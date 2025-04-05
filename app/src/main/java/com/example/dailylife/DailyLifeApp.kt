@@ -3,7 +3,10 @@ package com.example.dailylife
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
@@ -15,6 +18,7 @@ import com.example.dailylife.ui.theme.DailyLifeTheme
 @Composable
 fun DailyLifeApp() {
     val navController = rememberNavController()
+    val snackbarState = remember { SnackbarHostState() }
 
     DailyLifeTheme {
         Scaffold(
@@ -25,11 +29,13 @@ fun DailyLifeApp() {
                     contentColor = colorResource(R.color.alabaster),
                     navController = navController
                 )
-            }
+            },
+            snackbarHost = { SnackbarHost(hostState = snackbarState) }
         ) {
             DailyLifeNavHost(
                 modifier = Modifier.padding(it),
-                navController = navController
+                navController = navController,
+                snackbarHostState = snackbarState
             )
         }
     }

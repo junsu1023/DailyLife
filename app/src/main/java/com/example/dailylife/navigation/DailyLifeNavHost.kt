@@ -2,6 +2,7 @@ package com.example.dailylife.navigation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
@@ -21,7 +22,8 @@ import com.example.dailylife.viewmodel.TodoViewModel
 @Composable
 fun DailyLifeNavHost(
     modifier: Modifier = Modifier,
-    navController: NavHostController
+    navController: NavHostController,
+    snackbarHostState: SnackbarHostState
 ) {
     val viewModelStoreOwner = checkNotNull(LocalViewModelStoreOwner.current)
 
@@ -36,7 +38,8 @@ fun DailyLifeNavHost(
             val todoViewModel: TodoViewModel = hiltViewModel(viewModelStoreOwner)
 
             TodoScreen(
-                todoViewModel = todoViewModel
+                todoViewModel = todoViewModel,
+                snackbarHostState = snackbarHostState
             )
         }
 
@@ -44,7 +47,8 @@ fun DailyLifeNavHost(
             val todoViewModel: TodoViewModel = hiltViewModel(viewModelStoreOwner)
 
             CalendarScreen(
-                todoViewModel = todoViewModel
+                todoViewModel = todoViewModel,
+                snackbarHostState = snackbarHostState
             )
         }
 
@@ -65,8 +69,8 @@ fun DailyLifeNavHost(
             val accountViewModel: AccountViewModel = hiltViewModel(viewModelStoreOwner)
 
             AddAccountScreen(
-                navController = navController,
-                accountViewModel = accountViewModel
+                accountViewModel = accountViewModel,
+                onBackAction = { navController.popBackStack() }
             )
         }
     }

@@ -15,14 +15,20 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -32,7 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
+import androidx.core.content.ContextCompat.getString
 import com.example.dailylife.R
 import com.example.dailylife.component.AccountComponentTextField
 import com.example.dailylife.component.HorizontalDivider
@@ -40,51 +46,68 @@ import com.example.dailylife.state.AccountState
 import com.example.dailylife.util.getToday
 import com.example.dailylife.util.noRippleClick
 import com.example.dailylife.util.roundRippleClickable
+import com.example.dailylife.util.showSnackbarShort
 import com.example.dailylife.util.topBarModifier
 import com.example.dailylife.viewmodel.AccountViewModel
 import com.example.data.entitiy.AccountEntity
+import com.example.domain.state.AccountContinuationState
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun AddAccountScreen(
-    navController: NavController,
-    accountViewModel: AccountViewModel
+    accountViewModel: AccountViewModel,
+    onBackAction: () -> Unit
 ) {
+    val context = LocalContext.current
     var accountState by remember { mutableStateOf(AccountState.INCOME) }
-    val clickBackButton: () -> Unit = {
-        navController.popBackStack()
+    val snackbarState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(accountViewModel.accountContinuationError) {
+        accountViewModel.accountContinuationError.collectLatest { error ->
+            when(error) {
+                AccountContinuationState.InValidDateFormat -> snackbarState.showSnackbarShort(scope, getString(context, R.string.invalid_date))
+                AccountContinuationState.InvalidCostFormat -> snackbarState.showSnackbarShort(scope, getString(context, R.string.invalid_cost))
+                else -> snackbarState.showSnackbarShort(scope, getString(context, R.string.error))
+            }
+        }
     }
 
-    Column(
-        modifier = Modifier.fillMaxSize()
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarState) }
     ) {
-        AddAccountTopBarArea(
-            modifier = Modifier.topBarModifier(),
-            title = when(accountState) {
-                AccountState.INCOME -> stringResource(R.string.income)
-                AccountState.EXPEND -> stringResource(R.string.expend)
-                else -> stringResource(R.string.error)
-            },
-            clickBackButton = clickBackButton
-        )
-
-        AccountButtonArea(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            accountState = accountState,
-            onClick = { accountState = it }
-        )
+                .fillMaxSize()
+                .background(colorResource(R.color.ivory))
+                .padding(it)
+        ) {
+            AddAccountTopBarArea(
+                modifier = Modifier.topBarModifier(),
+                title = when(accountState) {
+                    AccountState.INCOME -> stringResource(R.string.income)
+                    AccountState.EXPEND -> stringResource(R.string.expend)
+                    else -> stringResource(R.string.error)
+                },
+                clickBackButton = onBackAction
+            )
 
-        HorizontalDivider()
+            AccountButtonArea(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                accountState = accountState,
+                onClick = { accountState = it }
+            )
 
-        EditInfoArea(
-            modifier = Modifier.weight(1f),
-            accountState = accountState,
-            onSave = {
-                accountViewModel.addAccountItem(it)
-                navController.popBackStack()
-            }
-        )
+            HorizontalDivider()
+
+            EditInfoArea(
+                modifier = Modifier.weight(1f),
+                accountState = accountState,
+                onSave = { accountViewModel.addAccountItem(it) }
+            )
+        }
     }
 }
 
@@ -223,7 +246,7 @@ fun EditInfoArea(
             text = stringResource(R.string.cost),
             accountState = accountState,
             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-            onTextChange = { infoCost = it }
+            onTextChange = { infoCost = if(it.isNotBlank() && it.last() != '원') "${it}원"  else it }
         )
 
         EditItem(
@@ -242,6 +265,7 @@ fun EditInfoArea(
 
         Spacer(modifier = Modifier.height(10.dp))
 
+        println("test-kjs: infocost = $infoCost")
         SaveButton(
             onSave = {
                 onSave(

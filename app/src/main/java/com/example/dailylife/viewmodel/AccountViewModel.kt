@@ -65,10 +65,8 @@ class AccountViewModel @Inject constructor(
 
     fun addAccountItem(accountItem: AccountEntity) = onIO {
         addAccountItemUseCase(accountItem.convertAccountItemModel()).onSuccess {
-            println("test-kjs: success")
             publishEvent(Event.NeedRefresh)
         }.onFailure {
-            println("test-kjs: it = $it")
             _accountContinuationError.emit(it)
         }
     }
