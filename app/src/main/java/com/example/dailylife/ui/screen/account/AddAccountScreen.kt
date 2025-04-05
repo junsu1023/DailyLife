@@ -227,6 +227,7 @@ fun EditInfoArea(
     accountState: AccountState,
     onSave: (AccountEntity) -> Unit
 ) {
+    val context = LocalContext.current
     val infoKind = when(accountState) {
         AccountState.INCOME -> stringResource(R.string.income)
         AccountState.EXPEND -> stringResource(R.string.expend)
@@ -234,8 +235,8 @@ fun EditInfoArea(
     }
     var infoDate by remember { mutableStateOf("") }
     var infoCost by remember { mutableStateOf("") }
-    var infoClassification by remember { mutableStateOf<String?>(null) }
-    var infoContent by remember { mutableStateOf<String?>(null) }
+    var infoClassification by remember { mutableStateOf("") }
+    var infoContent by remember { mutableStateOf("") }
 
     Column(
         modifier = modifier.padding(horizontal = 10.dp)
@@ -278,8 +279,8 @@ fun EditInfoArea(
                         kind = infoKind,
                         date = infoDate.takeIf { it.isNotBlank() } ?: getToday(),
                         cost = infoCost.substring(0, infoCost.lastIndex).toLong(),
-                        classification = infoClassification,
-                        content = infoContent
+                        classification = getString(context, R.string.etc).takeIf { infoClassification.isBlank() } ?: infoClassification ,
+                        content = getString(context, R.string.etc).takeIf { infoContent.isBlank() } ?: infoContent
                     )
                 )
             }
@@ -361,8 +362,8 @@ fun makeAccountItem(
     kind: String,
     date: String,
     cost: Long,
-    classification: String?,
-    content: String?
+    classification: String,
+    content: String
 ): AccountEntity =
     AccountEntity(
         kind = kind,

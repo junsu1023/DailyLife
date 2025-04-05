@@ -447,7 +447,7 @@ fun AccountItemBody(
         verticalAlignment = Alignment.CenterVertically
     ) {
         AccountCommonText(
-            text = accountItem.classification ?: stringResource(R.string.etc),
+            text = accountItem.classification,
             color = colorResource(R.color.dark_gray),
             modifier = Modifier.width(30.dp)
         )
@@ -456,7 +456,7 @@ fun AccountItemBody(
 
         Column {
             AccountCommonText(
-                text = accountItem.content ?: stringResource(R.string.etc),
+                text = accountItem.content,
                 color = colorResource(R.color.dark_gray)
             )
 

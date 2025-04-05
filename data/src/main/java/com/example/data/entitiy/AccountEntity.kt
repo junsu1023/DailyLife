@@ -9,6 +9,6 @@ data class AccountEntity(
     val kind: String,
     val date: String,
     val cost: Long,
-    val classification: String? = null,
-    val content: String? = null
+    val classification: String,
+    val content: String
 )
