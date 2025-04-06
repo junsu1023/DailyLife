@@ -1,6 +1,7 @@
 package com.example.data.di
 
 import com.example.domain.repository.AccountRepository
+import com.example.domain.repository.ClassificationRepository
 import com.example.domain.repository.TodoRepository
 import com.example.domain.usecase.account.AddAccountItemUseCase
 import com.example.domain.usecase.todo.AddTodoUseCase
@@ -15,6 +16,10 @@ import com.example.domain.usecase.todo.GetCompleteTodoListOfTodayUseCase
 import com.example.domain.usecase.account.GetCurrentYMAccountInfoUseCase
 import com.example.domain.usecase.todo.GetTodoListOfTodayUseCase
 import com.example.domain.usecase.account.UpdateAccountItemUseCase
+import com.example.domain.usecase.classification.AddClassificationUseCase
+import com.example.domain.usecase.classification.DeleteClassificationUseCase
+import com.example.domain.usecase.classification.GetClassificationListUseCase
+import com.example.domain.usecase.classification.UpdateClassificationUseCase
 import com.example.domain.usecase.todo.UpdateTodoListUseCase
 import dagger.Module
 import dagger.Provides
@@ -24,7 +29,7 @@ import dagger.hilt.components.SingletonComponent
 @Module
 @InstallIn(SingletonComponent::class)
 object UseCaseModule {
-    // Todo & Calendar
+    // Calendar & Todo
     @Provides
     fun provideGetAllTodoListUseCase(todoRepository: TodoRepository) = GetAllTodoListUseCase(todoRepository)
 
@@ -67,4 +72,17 @@ object UseCaseModule {
 
     @Provides
     fun provideUpdateAccountItemUseCase(accountRepository: AccountRepository) = UpdateAccountItemUseCase(accountRepository)
+
+    // Classification
+    @Provides
+    fun provideGetClassificationListUseCase(classificationRepository: ClassificationRepository) = GetClassificationListUseCase(classificationRepository)
+
+    @Provides
+    fun provideAddClassificationUseCase(classificationRepository: ClassificationRepository) = AddClassificationUseCase(classificationRepository)
+
+    @Provides
+    fun provideDeleteClassificationUseCase(classificationRepository: ClassificationRepository) = DeleteClassificationUseCase(classificationRepository)
+
+    @Provides
+    fun provideUpdateClassificationUseCase(classificationRepository: ClassificationRepository) = UpdateClassificationUseCase(classificationRepository)
 }

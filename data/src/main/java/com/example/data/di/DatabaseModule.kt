@@ -29,12 +29,11 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideAccountDatabase(@ApplicationContext context: Context): AccountDatabase =
-        Room.databaseBuilder(
-            context = context,
-            klass = AccountDatabase::class.java,
-            name = "account_db"
-        ).build()
+        AccountDatabase.getInstance(context)
 
     @Provides
     fun provideAccountDao(accountDatabase: AccountDatabase) = accountDatabase.accountDao()
+
+    @Provides
+    fun provideClassificationDao(accountDatabase: AccountDatabase) = accountDatabase.classificationDao()
 }
