@@ -33,16 +33,22 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.getString
 import com.example.dailylife.R
 import com.example.dailylife.component.AccountComponentTextField
 import com.example.dailylife.component.HorizontalDivider
+import com.example.dailylife.component.TextField
 import com.example.dailylife.state.AccountState
+import com.example.dailylife.transformation.CostTransformation
+import com.example.dailylife.transformation.DateTransformation
 import com.example.dailylife.util.getToday
 import com.example.dailylife.util.noRippleClick
 import com.example.dailylife.util.roundRippleClickable
@@ -243,17 +249,19 @@ fun EditInfoArea(
     ) {
         EditItem(
             text = stringResource(R.string.date),
-            subText = getToday(),
+            subText = getToday().split("-").joinToString(""),
             accountState = accountState,
             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-            onTextChange = { infoDate = it }
+            onTextChange = { infoDate = it },
+            visualTransformation = DateTransformation()
         )
 
         EditItem(
             text = stringResource(R.string.cost),
             accountState = accountState,
             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-            onTextChange = { infoCost = if(it.isNotBlank() && it.last() != '원') "${it}원"  else it }
+            onTextChange = { infoCost = it },
+            visualTransformation = CostTransformation()
         )
 
         EditItem(
@@ -294,9 +302,10 @@ fun EditItem(
     subText: String? = null,
     accountState: AccountState,
     keyboardOptions: KeyboardOptions? = null,
+    visualTransformation: VisualTransformation? = null,
     onTextChange: (String) -> Unit
 ) {
-    var content by remember { mutableStateOf(subText ?: "") }
+    var textField by remember { mutableStateOf(TextFieldValue(subText ?: "")) }
 
     val focusedIndicatorColor = when(accountState) {
         AccountState.INCOME -> colorResource(R.color.medium_blue)
@@ -320,14 +329,13 @@ fun EditItem(
         )
 
         Spacer(modifier = Modifier.width(20.dp))
-
-        val isCost = text == stringResource(R.string.cost)
         AccountComponentTextField(
-            text = if(isCost && content.isNotBlank()) "${content}원" else content,
+            text = textField.text,
             focusedIndicatorColor = focusedIndicatorColor,
             keyboardOptions = keyboardOptions ?: KeyboardOptions.Default,
+            visualTransformation = visualTransformation ?: VisualTransformation.None,
             onValueChange = {
-                content = if(isCost && it.last() !in '0' .. '9') it.substring(0, it.length - 1) else it
+                textField = TextFieldValue(it)
                 onTextChange(it)
             }
         )
