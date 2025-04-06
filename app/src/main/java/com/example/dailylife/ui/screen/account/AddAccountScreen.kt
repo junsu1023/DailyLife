@@ -1,5 +1,6 @@
 package com.example.dailylife.ui.screen.account
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -39,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.getString
@@ -242,6 +244,7 @@ fun EditInfoArea(
     var infoDate by remember { mutableStateOf("") }
     var infoCost by remember { mutableStateOf("") }
     var infoClassification by remember { mutableStateOf("") }
+    var cardCompany by remember { mutableStateOf("") }
     var infoContent by remember { mutableStateOf("") }
 
     Column(
@@ -271,6 +274,12 @@ fun EditInfoArea(
         )
 
         EditItem(
+            text = stringResource(R.string.card_company),
+            accountState = accountState,
+            onTextChange = { cardCompany = it }
+        )
+
+        EditItem(
             text = stringResource(R.string.content),
             accountState = accountState,
             onTextChange = { infoContent = it }
@@ -287,7 +296,8 @@ fun EditInfoArea(
                         kind = infoKind,
                         date = infoDate.takeIf { it.isNotBlank() } ?: getToday(),
                         cost = infoCost.substring(0, infoCost.lastIndex).toLong(),
-                        classification = getString(context, R.string.etc).takeIf { infoClassification.isBlank() } ?: infoClassification ,
+                        classification = getString(context, R.string.etc).takeIf { infoClassification.isBlank() } ?: infoClassification,
+                        cardCompany = getString(context, R.string.money).takeIf { cardCompany.isBlank() } ?: cardCompany,
                         content = getString(context, R.string.etc).takeIf { infoContent.isBlank() } ?: infoContent
                     )
                 )
@@ -323,12 +333,15 @@ fun EditItem(
         Text(
             text = text,
             style = TextStyle(
-                fontSize = 15.sp,
+                fontSize = 12.sp,
                 platformStyle = PlatformTextStyle(includeFontPadding = false)
-            )
+            ),
+            textAlign = TextAlign.Center,
+            modifier = Modifier.width(40.dp)
         )
 
         Spacer(modifier = Modifier.width(20.dp))
+
         AccountComponentTextField(
             text = textField.text,
             focusedIndicatorColor = focusedIndicatorColor,
@@ -371,6 +384,7 @@ fun makeAccountItem(
     date: String,
     cost: Long,
     classification: String,
+    cardCompany: String,
     content: String
 ): AccountEntity =
     AccountEntity(
@@ -378,5 +392,6 @@ fun makeAccountItem(
         date = date,
         cost = cost,
         classification = classification,
+        cardCompany = cardCompany,
         content = content
     )
