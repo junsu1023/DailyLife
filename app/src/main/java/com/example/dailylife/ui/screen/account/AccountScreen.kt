@@ -1,7 +1,9 @@
 package com.example.dailylife.ui.screen.account
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.dailylife.R
 import com.example.dailylife.component.AccountCommonText
+import com.example.dailylife.component.CheckDeleteDialog
 import com.example.dailylife.state.AccountState
 import com.example.dailylife.ui.screen.todo.TodoExpandButton
 import com.example.dailylife.util.convertLocalDate
@@ -56,6 +59,9 @@ fun AccountScreen(
     accountViewModel: AccountViewModel,
     onClickAddButton: () -> Unit
 ) {
+    var isShowCheckDeleteDialog by remember { mutableStateOf(false) }
+    var updateAccountItem by remember { mutableStateOf<AccountEntity?>(null) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -65,13 +71,14 @@ fun AccountScreen(
             modifier = Modifier.fillMaxSize()
         ) {
             val currentYM by accountViewModel.currentYM.collectAsStateWithLifecycle()
+            val accountOfDateGroup by accountViewModel.accountOfDateGroup.collectAsStateWithLifecycle()
 
             var totalIncome by remember { mutableStateOf(0L) }
             var totalExpend by remember { mutableStateOf(0L) }
             val strIncome = stringResource(R.string.income)
             val strExpend = stringResource(R.string.expend)
 
-            LaunchedEffect(currentYM) {
+            LaunchedEffect(currentYM, accountOfDateGroup) {
                 totalIncome = accountViewModel.getTotal(strIncome)
                 totalExpend = accountViewModel.getTotal(strExpend)
             }
@@ -93,7 +100,9 @@ fun AccountScreen(
 
             AccountContentArea(
                 modifier = Modifier.weight(1f),
-                accountViewModel = accountViewModel
+                accountOfDateGroup = accountOfDateGroup,
+                callBackShowDialogState = { isShowCheckDeleteDialog = true },
+                callBackAccountItem = { updateAccountItem = it },
             )
         }
 
@@ -103,6 +112,20 @@ fun AccountScreen(
                 .padding(bottom = 20.dp, end = 10.dp),
             onClick = onClickAddButton
         )
+
+        if(isShowCheckDeleteDialog) {
+            CheckDeleteDialog(
+                title = stringResource(R.string.delete_dialog_title),
+                description = stringResource(R.string.delete_dialog_description),
+                onClickCancel = {
+                    isShowCheckDeleteDialog = false
+                },
+                onClickConfirm = {
+                    accountViewModel.deleteAccountItem(updateAccountItem!!)
+                    isShowCheckDeleteDialog = false
+                }
+            )
+        }
     }
 }
 
@@ -234,19 +257,21 @@ private fun AccountAddButton(
 @Composable
 private fun AccountContentArea(
     modifier: Modifier,
-    accountViewModel: AccountViewModel
+    accountOfDateGroup: Map<String, List<AccountEntity>>,
+    callBackShowDialogState: () -> Unit,
+    callBackAccountItem: (AccountEntity) -> Unit
 ) {
     Box(
         modifier = modifier
     ) {
-        val accountOfDateGroup by accountViewModel.accountOfDateGroup.collectAsStateWithLifecycle()
-
         if(accountOfDateGroup.isEmpty()) {
             BlankArea()
         } else {
             AccountBundle(
                 modifier = Modifier.fillMaxSize(),
-                accountOfDateGroup = accountOfDateGroup
+                accountOfDateGroup = accountOfDateGroup,
+                callBackShowDialogState = callBackShowDialogState,
+                callBackAccountItem = callBackAccountItem
             )
         }
     }
@@ -268,7 +293,9 @@ private fun BlankArea() {
 @Composable
 private fun AccountBundle(
     modifier: Modifier,
-    accountOfDateGroup: Map<String, List<AccountEntity>>
+    accountOfDateGroup: Map<String, List<AccountEntity>>,
+    callBackShowDialogState: () -> Unit,
+    callBackAccountItem: (AccountEntity) -> Unit
 ) {
     val listState = rememberScrollState()
 
@@ -289,10 +316,13 @@ private fun AccountBundle(
             ) {
                 curDateList.forEach { accountItem ->
                     AccountItemBody(
-                        accountItem = accountItem
+                        accountItem = accountItem,
+                        callBackShowDialogState = callBackShowDialogState,
+                        callBackAccountItem = callBackAccountItem
                     )
 
                     Spacer(modifier = Modifier.height(5.dp))
+
                     HorizontalDivider(
                         color = colorResource(R.color.platinum)
                     )
@@ -395,19 +425,29 @@ private fun AccountItemHeader(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AccountItemBody(
-    accountItem: AccountEntity
+    accountItem: AccountEntity,
+    callBackShowDialogState: () -> Unit,
+    callBackAccountItem: (AccountEntity) -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .padding(start = 10.dp, end = 20.dp),
+            .padding(start = 10.dp, end = 20.dp)
+            .combinedClickable(
+                onClick = { },
+                onLongClick = {
+                    callBackShowDialogState()
+                    callBackAccountItem(accountItem)
+                }
+            ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         AccountCommonText(
-            text = accountItem.classification ?: stringResource(R.string.etc),
+            text = accountItem.classification,
             color = colorResource(R.color.dark_gray),
             modifier = Modifier.width(30.dp)
         )
@@ -416,7 +456,7 @@ fun AccountItemBody(
 
         Column {
             AccountCommonText(
-                text = accountItem.content ?: stringResource(R.string.etc),
+                text = accountItem.content,
                 color = colorResource(R.color.dark_gray)
             )
 
