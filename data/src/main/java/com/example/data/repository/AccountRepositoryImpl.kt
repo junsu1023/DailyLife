@@ -33,5 +33,4 @@ class AccountRepositoryImpl(
     } catch (t: Throwable) {
         Result.failure(FailedState.FailedUpdate)
     }
-
 }

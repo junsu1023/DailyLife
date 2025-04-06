@@ -1,6 +1,5 @@
 package com.example.dailylife.ui.screen.account
 
-import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -8,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -34,7 +34,6 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -46,8 +45,9 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.getString
 import com.example.dailylife.R
 import com.example.dailylife.component.AccountComponentTextField
+import com.example.dailylife.component.AccountEditText
+import com.example.dailylife.component.AccountSelectorBox
 import com.example.dailylife.component.HorizontalDivider
-import com.example.dailylife.component.TextField
 import com.example.dailylife.state.AccountState
 import com.example.dailylife.transformation.CostTransformation
 import com.example.dailylife.transformation.DateTransformation
@@ -70,6 +70,7 @@ fun AddAccountScreen(
     var accountState by remember { mutableStateOf(AccountState.INCOME) }
     val snackbarState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    var isShowSelectAccountInfoBox by remember { mutableStateOf("") }
 
     LaunchedEffect(accountViewModel.accountContinuationError) {
         accountViewModel.accountContinuationError.collectLatest { error ->
@@ -90,37 +91,61 @@ fun AddAccountScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarState) }
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(colorResource(R.color.ivory))
-                .padding(it)
+        Box(
+            modifier = Modifier.fillMaxSize()
         ) {
-            AddAccountTopBarArea(
-                modifier = Modifier.topBarModifier(),
-                title = when(accountState) {
-                    AccountState.INCOME -> stringResource(R.string.income)
-                    AccountState.EXPEND -> stringResource(R.string.expend)
-                    else -> stringResource(R.string.error)
-                },
-                clickBackButton = onBackAction
-            )
-
-            AccountButtonArea(
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                accountState = accountState,
-                onClick = { accountState = it }
-            )
+                    .fillMaxSize()
+                    .background(colorResource(R.color.ivory))
+                    .padding(it)
+            ) {
+                AddAccountTopBarArea(
+                    modifier = Modifier.topBarModifier(),
+                    title = when(accountState) {
+                        AccountState.INCOME -> stringResource(R.string.income)
+                        AccountState.EXPEND -> stringResource(R.string.expend)
+                        else -> stringResource(R.string.error)
+                    },
+                    clickBackButton = onBackAction
+                )
 
-            HorizontalDivider()
+                AccountButtonArea(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    accountState = accountState,
+                    onClick = { state -> accountState = state }
+                )
 
-            EditInfoArea(
-                modifier = Modifier.weight(1f),
-                accountState = accountState,
-                onSave = { accountViewModel.addAccountItem(it) }
-            )
+                HorizontalDivider()
+
+                EditInfoArea(
+                    modifier = Modifier.weight(1f),
+                    accountState = accountState,
+                    onSave = { item -> accountViewModel.addAccountItem(item) },
+                    onShowAccountInfoBox = { kind -> isShowSelectAccountInfoBox = kind }
+                )
+            }
+
+            if(isShowSelectAccountInfoBox.isNotBlank()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .noRippleClick(
+                            onClick = { isShowSelectAccountInfoBox = "" }
+                        ),
+                    contentAlignment = Alignment.BottomCenter
+                ) {
+                    AccountSelectorBox(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(0.5f),
+                        title = isShowSelectAccountInfoBox,
+                        onClose = { isShowSelectAccountInfoBox = "" }
+                    )
+                }
+            }
         }
     }
 }
@@ -233,7 +258,8 @@ fun AccountButton(
 fun EditInfoArea(
     modifier: Modifier,
     accountState: AccountState,
-    onSave: (AccountEntity) -> Unit
+    onSave: (AccountEntity) -> Unit,
+    onShowAccountInfoBox: (String) -> Unit
 ) {
     val context = LocalContext.current
     val infoKind = when(accountState) {
@@ -270,13 +296,17 @@ fun EditInfoArea(
         EditItem(
             text = stringResource(R.string.classification),
             accountState = accountState,
-            onTextChange = { infoClassification = it }
+            isTextField = false,
+            onTextChange = { infoClassification = it },
+            onShowAccountInfoBox = { onShowAccountInfoBox(getString(context, R.string.classification)) }
         )
 
         EditItem(
             text = stringResource(R.string.card_company),
             accountState = accountState,
-            onTextChange = { cardCompany = it }
+            isTextField = false,
+            onTextChange = { cardCompany = it },
+            onShowAccountInfoBox = { onShowAccountInfoBox(getString(context, R.string.card_company)) }
         )
 
         EditItem(
@@ -295,7 +325,7 @@ fun EditInfoArea(
                     makeAccountItem(
                         kind = infoKind,
                         date = infoDate.takeIf { it.isNotBlank() } ?: getToday(),
-                        cost = infoCost.substring(0, infoCost.lastIndex).toLong(),
+                        cost = if(infoCost.isNotBlank()) infoCost.substring(0, infoCost.lastIndex).toLong() else 0,
                         classification = getString(context, R.string.etc).takeIf { infoClassification.isBlank() } ?: infoClassification,
                         cardCompany = getString(context, R.string.money).takeIf { cardCompany.isBlank() } ?: cardCompany,
                         content = getString(context, R.string.etc).takeIf { infoContent.isBlank() } ?: infoContent
@@ -313,7 +343,9 @@ fun EditItem(
     accountState: AccountState,
     keyboardOptions: KeyboardOptions? = null,
     visualTransformation: VisualTransformation? = null,
-    onTextChange: (String) -> Unit
+    isTextField: Boolean = true,
+    onTextChange: (String) -> Unit,
+    onShowAccountInfoBox: (() -> Unit)? = null
 ) {
     var textField by remember { mutableStateOf(TextFieldValue(subText ?: "")) }
 
@@ -342,16 +374,31 @@ fun EditItem(
 
         Spacer(modifier = Modifier.width(20.dp))
 
-        AccountComponentTextField(
-            text = textField.text,
-            focusedIndicatorColor = focusedIndicatorColor,
-            keyboardOptions = keyboardOptions ?: KeyboardOptions.Default,
-            visualTransformation = visualTransformation ?: VisualTransformation.None,
-            onValueChange = {
-                textField = TextFieldValue(it)
-                onTextChange(it)
-            }
-        )
+        if(isTextField) {
+            AccountComponentTextField(
+                text = textField.text,
+                focusedIndicatorColor = focusedIndicatorColor,
+                keyboardOptions = keyboardOptions ?: KeyboardOptions.Default,
+                visualTransformation = visualTransformation ?: VisualTransformation.None,
+                onValueChange = {
+                    textField = TextFieldValue(it)
+                    onTextChange(it)
+                }
+            )
+        } else {
+            AccountEditText(
+                modifier = Modifier.
+                    noRippleClick(
+                        onClick = onShowAccountInfoBox!!
+                    ),
+                text = textField.text,
+                focusedIndicatorColor = focusedIndicatorColor,
+                onValueChange = {
+                    textField = TextFieldValue(it)
+                    onTextChange(it)
+                }
+            )
+        }
     }
 }
 
