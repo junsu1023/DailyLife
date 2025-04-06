@@ -10,6 +10,7 @@ fun AccountEntity.convertAccountItemModel(): AccountModel =
         this.date,
         this.cost,
         this.classification,
+        this.cardCompany,
         this.content
     )
 
@@ -20,5 +21,6 @@ fun AccountModel.convertAccountItemEntity(): AccountEntity =
         this.date,
         this.cost,
         this.classification,
+        this.cardCompany,
         this.content
     )

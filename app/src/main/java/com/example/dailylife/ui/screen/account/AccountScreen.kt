@@ -461,7 +461,7 @@ fun AccountItemBody(
             )
 
             AccountCommonText(
-                text = "시간 넣기",
+                text = accountItem.cardCompany,
                 fontSize = 12.sp,
                 color = colorResource(R.color.dark_gray)
             )
