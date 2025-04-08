@@ -277,7 +277,8 @@ fun TodoTopBarArea(
                     fontWeight = FontWeight.Bold,
                     platformStyle = PlatformTextStyle(
                         includeFontPadding = false
-                    )
+                    ),
+                    color = colorResource(R.color.black)
                 )
             )
 
@@ -440,7 +441,8 @@ fun TodoListHeader(
                     TodoState.TODO -> stringResource(R.string.Work)
                     TodoState.DATE_COMPLETE -> stringResource(R.string.complete)
                     TodoState.ETC -> stringResource(R.string.expenditure_info)
-                }
+                },
+                color = colorResource(R.color.black)
             )
 
             TodoExpandButton(
@@ -545,7 +547,8 @@ fun TodoItemArea(
 
         Text(
             text = todoItem.title ?: stringResource(R.string.does_not_exist),
-            fontSize = if(isCalendarItem) 15.sp else TextUnit.Unspecified
+            fontSize = if(isCalendarItem) 15.sp else TextUnit.Unspecified,
+            color = colorResource(R.color.black)
         )
 
         Spacer(modifier = Modifier.weight(1f))

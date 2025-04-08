@@ -125,7 +125,8 @@ fun EditListTopBarArea(
             text = title,
             style = TextStyle(
                 fontWeight = FontWeight.SemiBold,
-                platformStyle = PlatformTextStyle(includeFontPadding = false)
+                platformStyle = PlatformTextStyle(includeFontPadding = false),
+                color = colorResource(R.color.black)
             )
         )
 
@@ -226,7 +227,8 @@ fun ItemArea(
             text = title,
             style = TextStyle(
                 fontSize = 15.sp,
-                platformStyle = PlatformTextStyle(includeFontPadding = false)
+                platformStyle = PlatformTextStyle(includeFontPadding = false),
+                color = colorResource(R.color.black)
             )
         )
 

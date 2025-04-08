@@ -81,7 +81,8 @@ fun TodoEditScreen(
             ) {
                 Text(
                     modifier = Modifier.weight(1f),
-                    text = "${stringResource(R.string.due_date)}:  $date"
+                    text = "${stringResource(R.string.due_date)}:  $date",
+                    color = colorResource(R.color.black)
                 )
 
                 Icon(
@@ -120,7 +121,8 @@ fun TodoEditScreen(
                                 hideTodoEditScreen()
                             }
                         ),
-                    text = stringResource(R.string.cancel)
+                    text = stringResource(R.string.cancel),
+                    color = colorResource(R.color.black)
                 )
 
                 Text(
@@ -150,7 +152,8 @@ fun TodoEditScreen(
                                 hideTodoEditScreen()
                             }
                         ),
-                    text = stringResource(R.string.ok)
+                    text = stringResource(R.string.ok),
+                    color = colorResource(R.color.black)
                 )
             }
 

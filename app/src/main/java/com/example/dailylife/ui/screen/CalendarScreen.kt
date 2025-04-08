@@ -410,8 +410,11 @@ fun CalendarTopBarArea(
         Text(
             modifier = Modifier.align(Alignment.Center),
             text = "${pageYearAndMonth.year}${stringResource(R.string.year)} ${pageYearAndMonth.monthValue}${stringResource(R.string.month)}",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.SemiBold
+            style = TextStyle(
+                fontSize = 22.sp,
+                color = colorResource(R.color.black),
+                fontWeight = FontWeight.SemiBold
+            )
         )
 
         Row(
@@ -646,8 +649,11 @@ fun DayDiffInfoArea(
                 daysDiff > 0L -> "${daysDiff}${stringResource(R.string.calendar_after)}"
                 else -> "${abs(daysDiff)}${stringResource(R.string.calendar_before)}"
             },
-            fontSize = 17.sp,
-            fontWeight = FontWeight.SemiBold
+            style = TextStyle(
+                fontSize = 17.sp,
+                color = colorResource(R.color.black),
+                fontWeight = FontWeight.SemiBold
+            )
         )
     }
 }

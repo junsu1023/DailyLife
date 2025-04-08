@@ -155,8 +155,9 @@ fun SelectorBodyArea(
                             Text(
                                 text = classification.classification,
                                 style = TextStyle(
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Light
+                                    fontSize = 10.sp,
+                                    color = colorResource(R.color.black),
+                                    fontWeight = FontWeight.Bold
                                 )
                             )
                         }
@@ -182,8 +183,9 @@ fun SelectorBodyArea(
                             Text(
                                 text = cardCompany.cardCompany,
                                 style = TextStyle(
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Light
+                                    fontSize = 10.sp,
+                                    color = colorResource(R.color.black),
+                                    fontWeight = FontWeight.Bold
                                 )
                             )
                         }

@@ -29,6 +29,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -104,11 +106,16 @@ fun IconSelectorContainer(
                         callBackContainerSize(size)
                     }
             ) {
+                Spacer(modifier = Modifier.height(5.dp))
+
                 Text(
                     modifier = Modifier.padding(start = 10.dp),
                     text = stringResource(R.string.select_icon),
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold
+                    style = TextStyle(
+                        fontSize = 10.sp,
+                        color = colorResource(R.color.black),
+                        fontWeight = FontWeight.Bold
+                    )
                 )
 
                 Box(

@@ -188,7 +188,8 @@ private fun AccountTopBarArea(
                     textAlign = TextAlign.Center,
                     platformStyle = PlatformTextStyle(
                         includeFontPadding = false
-                    )
+                    ),
+                    color = colorResource(R.color.black)
                 )
             )
 
@@ -244,7 +245,8 @@ private fun InfoArea(
                 AccountState.EXPEND -> stringResource(R.string.expend)
                 AccountState.TOTAL -> stringResource(R.string.total)
             },
-            fontSize = 15.sp
+            fontSize = 15.sp,
+            color = colorResource(R.color.black)
         )
 
         Text(
@@ -384,7 +386,8 @@ private fun AccountItemHeader(
         ) {
             Text(
                 text = date,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                color = colorResource(R.color.black)
             )
 
             Spacer(modifier = Modifier.width(5.dp))
@@ -398,7 +401,8 @@ private fun AccountItemHeader(
             ) {
                 Text(
                     text = dayOfWeek,
-                    fontSize = 10.sp
+                    fontSize = 10.sp,
+                    color = colorResource(R.color.black)
                 )
             }
 
@@ -426,7 +430,8 @@ private fun AccountItemHeader(
                     text = "|",
                     style = TextStyle(
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        color = colorResource(R.color.black)
                     )
                 )
             }

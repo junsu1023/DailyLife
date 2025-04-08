@@ -210,7 +210,8 @@ fun AddAccountTopBarArea(
             text = title,
             style = TextStyle(
                 fontWeight = FontWeight.SemiBold,
-                platformStyle = PlatformTextStyle(includeFontPadding = false)
+                platformStyle = PlatformTextStyle(includeFontPadding = false),
+                color = colorResource(R.color.black)
             )
         )
     }
@@ -419,7 +420,8 @@ fun EditItem(
             text = text,
             style = TextStyle(
                 fontSize = 12.sp,
-                platformStyle = PlatformTextStyle(includeFontPadding = false)
+                platformStyle = PlatformTextStyle(includeFontPadding = false),
+                color = colorResource(R.color.black)
             ),
             textAlign = TextAlign.Center,
             modifier = Modifier.width(40.dp)
