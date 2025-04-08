@@ -4,7 +4,13 @@ import com.example.data.entitiy.ClassificationEntity
 import com.example.domain.model.ClassificationModel
 
 fun ClassificationModel.convertEntity(): ClassificationEntity =
-    ClassificationEntity(this.classification)
+    ClassificationEntity(
+        this.id,
+        this.classification
+    )
 
 fun ClassificationEntity.convertModel(): ClassificationModel =
-    ClassificationModel(this.classification)
+    ClassificationModel(
+        this.id,
+        this.classification
+    )

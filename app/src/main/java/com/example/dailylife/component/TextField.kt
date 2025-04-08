@@ -33,7 +33,9 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.VisualTransformation
@@ -130,8 +132,6 @@ fun AccountComponentTextField(
 ) {
     val focusRequester = FocusRequester()
     val focusManager = LocalFocusManager.current
-
-    val gray = colorResource(R.color.gray)
     var isFocus by remember { mutableStateOf(false) }
 
     BasicTextField(
@@ -140,7 +140,7 @@ fun AccountComponentTextField(
         decorationBox = { innerTextField ->
             Column {
                 innerTextField()
-                HorizontalDivider(focusedIndicatorColor.takeIf { isFocus }?: gray)
+                HorizontalDivider(focusedIndicatorColor.takeIf { isFocus }?: colorResource(R.color.gray))
             }
         },
         modifier = Modifier
@@ -152,6 +152,11 @@ fun AccountComponentTextField(
             onDone = { focusManager.clearFocus() }
         ),
         keyboardOptions = keyboardOptions,
-        visualTransformation = visualTransformation
+        visualTransformation = visualTransformation,
+        textStyle = TextStyle(
+            fontSize = 14.sp,
+            platformStyle = PlatformTextStyle(includeFontPadding = false),
+            fontFamily = FontFamily.Default
+        )
     )
 }

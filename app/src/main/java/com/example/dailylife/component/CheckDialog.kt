@@ -33,9 +33,10 @@ import androidx.compose.ui.window.DialogProperties
 import com.example.dailylife.R
 
 @Composable
-fun CheckDeleteDialog(
+fun CheckDialog(
     title: String,
     description: String,
+    leftButton: String = stringResource(R.string.delete),
     onClickCancel: () -> Unit,
     onClickConfirm: () -> Unit
 ) {
@@ -109,7 +110,7 @@ fun CheckDeleteDialog(
 
                         ) {
                         Text(
-                            text = stringResource(R.string.delete),
+                            text = leftButton,
                             textAlign = TextAlign.Center,
                             style = TextStyle(
                                 fontSize = 14.sp,

@@ -10,6 +10,9 @@ import com.example.domain.state.FailedState
 class AccountRepositoryImpl(
     private val accountDataSource: AccountDataSource
 ): AccountRepository {
+    override suspend fun getAllAccountInfo(): List<AccountModel> =
+        accountDataSource.getAllAccountInfo().map { it.convertAccountItemModel() }
+
     override suspend fun getCurrentYMAccountInfo(ym: String): List<AccountModel> =
         accountDataSource.getCurrentYMAccountInfo(ym).map { it.convertAccountItemModel() }
 

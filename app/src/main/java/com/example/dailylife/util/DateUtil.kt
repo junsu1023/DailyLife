@@ -38,3 +38,17 @@ fun YearMonth.convertDBString(): String {
 }
 
 fun String.convertLocalDate(): LocalDate = LocalDate.parse(this, DateTimeFormatter.ISO_DATE)
+
+fun String.convertStandardDate(): String {
+    if(this.isEmpty()) return getToday()
+    if(this.count { it == '-' } == 2) return this
+
+    var date = ""
+    for(i in this.indices) {
+        date += this[i]
+        if(i == 3) date += '-'
+        else if(i == 5) date += '-'
+    }
+
+    return date
+}

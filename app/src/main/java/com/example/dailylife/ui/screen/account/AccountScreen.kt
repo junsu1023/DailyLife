@@ -1,5 +1,7 @@
 package com.example.dailylife.ui.screen.account
 
+import android.app.Activity
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -30,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -42,7 +45,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.dailylife.R
 import com.example.dailylife.component.AccountCommonText
-import com.example.dailylife.component.CheckDeleteDialog
+import com.example.dailylife.component.CheckDialog
 import com.example.dailylife.state.AccountState
 import com.example.dailylife.ui.screen.todo.TodoExpandButton
 import com.example.dailylife.util.convertLocalDate
@@ -57,16 +60,24 @@ import java.util.Locale
 @Composable
 fun AccountScreen(
     accountViewModel: AccountViewModel,
-    onClickAddButton: () -> Unit
+    onClickAddButton: () -> Unit,
+    onClickAccountItem: (AccountEntity) -> Unit
 ) {
     var isShowCheckDeleteDialog by remember { mutableStateOf(false) }
+    var isShowExitDialog by remember { mutableStateOf(false) }
     var updateAccountItem by remember { mutableStateOf<AccountEntity?>(null) }
+
+    BackHandler {
+        isShowExitDialog = true
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(color = colorResource(R.color.ivory))
     ) {
+        val context = LocalContext.current
+
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -103,6 +114,7 @@ fun AccountScreen(
                 accountOfDateGroup = accountOfDateGroup,
                 callBackShowDialogState = { isShowCheckDeleteDialog = true },
                 callBackAccountItem = { updateAccountItem = it },
+                onClickAccountItem = onClickAccountItem
             )
         }
 
@@ -114,7 +126,7 @@ fun AccountScreen(
         )
 
         if(isShowCheckDeleteDialog) {
-            CheckDeleteDialog(
+            CheckDialog(
                 title = stringResource(R.string.delete_dialog_title),
                 description = stringResource(R.string.delete_dialog_description),
                 onClickCancel = {
@@ -124,6 +136,16 @@ fun AccountScreen(
                     accountViewModel.deleteAccountItem(updateAccountItem!!)
                     isShowCheckDeleteDialog = false
                 }
+            )
+        }
+
+        if(isShowExitDialog) {
+            CheckDialog(
+                title = stringResource(R.string.delete_dialog_title),
+                description = stringResource(R.string.exit_dialog_description),
+                leftButton = stringResource(R.string.ok),
+                onClickCancel = { isShowExitDialog = false },
+                onClickConfirm = { (context as Activity).finish() }
             )
         }
     }
@@ -259,7 +281,8 @@ private fun AccountContentArea(
     modifier: Modifier,
     accountOfDateGroup: Map<String, List<AccountEntity>>,
     callBackShowDialogState: () -> Unit,
-    callBackAccountItem: (AccountEntity) -> Unit
+    callBackAccountItem: (AccountEntity) -> Unit,
+    onClickAccountItem: (AccountEntity) -> Unit
 ) {
     Box(
         modifier = modifier
@@ -271,7 +294,8 @@ private fun AccountContentArea(
                 modifier = Modifier.fillMaxSize(),
                 accountOfDateGroup = accountOfDateGroup,
                 callBackShowDialogState = callBackShowDialogState,
-                callBackAccountItem = callBackAccountItem
+                callBackAccountItem = callBackAccountItem,
+                onClickAccountItem = onClickAccountItem
             )
         }
     }
@@ -295,7 +319,8 @@ private fun AccountBundle(
     modifier: Modifier,
     accountOfDateGroup: Map<String, List<AccountEntity>>,
     callBackShowDialogState: () -> Unit,
-    callBackAccountItem: (AccountEntity) -> Unit
+    callBackAccountItem: (AccountEntity) -> Unit,
+    onClickAccountItem: (AccountEntity) -> Unit
 ) {
     val listState = rememberScrollState()
 
@@ -318,7 +343,8 @@ private fun AccountBundle(
                     AccountItemBody(
                         accountItem = accountItem,
                         callBackShowDialogState = callBackShowDialogState,
-                        callBackAccountItem = callBackAccountItem
+                        callBackAccountItem = callBackAccountItem,
+                        onClickAccountItem = { onClickAccountItem(accountItem) }
                     )
 
                     Spacer(modifier = Modifier.height(5.dp))
@@ -430,15 +456,15 @@ private fun AccountItemHeader(
 fun AccountItemBody(
     accountItem: AccountEntity,
     callBackShowDialogState: () -> Unit,
-    callBackAccountItem: (AccountEntity) -> Unit
+    callBackAccountItem: (AccountEntity) -> Unit,
+    onClickAccountItem: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .padding(start = 10.dp, end = 20.dp)
             .combinedClickable(
-                onClick = { },
+                onClick = onClickAccountItem,
                 onLongClick = {
                     callBackShowDialogState()
                     callBackAccountItem(accountItem)
@@ -446,10 +472,12 @@ fun AccountItemBody(
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        Spacer(modifier = Modifier.width(10.dp))
+
         AccountCommonText(
             text = accountItem.classification,
             color = colorResource(R.color.dark_gray),
-            modifier = Modifier.width(30.dp)
+            modifier = Modifier.width(70.dp)
         )
 
         Spacer(modifier = Modifier.width(15.dp))
@@ -474,5 +502,7 @@ fun AccountItemBody(
             text = accountItem.cost.toString(),
             color = textColor
         )
+
+        Spacer(modifier = Modifier.width(20.dp))
     }
 }
