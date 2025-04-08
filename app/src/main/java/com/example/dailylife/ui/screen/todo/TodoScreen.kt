@@ -1,5 +1,7 @@
 package com.example.dailylife.ui.screen.todo
 
+import android.app.Activity
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -57,7 +59,7 @@ import androidx.core.content.ContextCompat.getString
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.dailylife.R
 import com.example.dailylife.component.CheckBox
-import com.example.dailylife.component.CheckDeleteDialog
+import com.example.dailylife.component.CheckDialog
 import com.example.dailylife.component.IconSelectorContainer
 import com.example.dailylife.component.TodoBottomSheet
 import com.example.dailylife.component.TodoDatePickerDialog
@@ -87,6 +89,7 @@ fun TodoScreen(
     var isShowCheckDeleteDialog by remember { mutableStateOf(false) }
     var isShowBottomSheet by remember { mutableStateOf(false) }
     var isShowTodoEditScreen by remember { mutableStateOf(false) }
+    var isShowExitDialog by remember { mutableStateOf(false) }
 
     // get size state
     var selectorContainerOffset by remember { mutableStateOf(Pair(Offset.Zero, Offset.Zero)) }
@@ -101,6 +104,10 @@ fun TodoScreen(
     val callBackOffset: (Pair<Offset, Offset>) -> Unit = {
         selectorContainerOffset = it
         isShowSelectContainer = true
+    }
+
+    BackHandler {
+        isShowExitDialog = true
     }
 
     LaunchedEffect(todoViewModel.todoItemContinuationError) {
@@ -187,16 +194,24 @@ fun TodoScreen(
         }
 
         if(isShowCheckDeleteDialog) {
-            CheckDeleteDialog(
+            CheckDialog(
                 title = stringResource(R.string.delete_dialog_title),
                 description = stringResource(R.string.delete_dialog_description),
-                onClickCancel = {
-                    isShowCheckDeleteDialog = false
-                },
+                onClickCancel = { isShowCheckDeleteDialog = false },
                 onClickConfirm = {
                     todoViewModel.deleteTodoList(updateTodoItem!!)
                     isShowCheckDeleteDialog = false
                 }
+            )
+        }
+
+        if(isShowExitDialog) {
+            CheckDialog(
+                title = stringResource(R.string.exit),
+                description = stringResource(R.string.exit_dialog_description),
+                leftButton = stringResource(R.string.ok),
+                onClickCancel = { isShowExitDialog = false },
+                onClickConfirm = { (context as Activity).finish() }
             )
         }
 
@@ -424,6 +439,7 @@ fun TodoListHeader(
                     TodoState.COMPLETE -> stringResource(R.string.today_complete)
                     TodoState.TODO -> stringResource(R.string.Work)
                     TodoState.DATE_COMPLETE -> stringResource(R.string.complete)
+                    TodoState.ETC -> stringResource(R.string.expenditure_info)
                 }
             )
 
@@ -520,6 +536,7 @@ fun TodoItemArea(
                         updateTodoList(todoItem.copy(isComplete = it, dueDate = todoItem.prevDueDate ?: today))
                     }
                     TodoState.TODAY -> updateTodoList(todoItem.copy(isComplete = it, prevDueDate = todoItem.dueDate))
+                    TodoState.ETC -> { }
                 }
             }
         )

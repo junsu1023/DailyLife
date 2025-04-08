@@ -1,5 +1,7 @@
 package com.example.dailylife.ui.screen.account
 
+import android.annotation.SuppressLint
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -51,26 +53,37 @@ import com.example.dailylife.component.HorizontalDivider
 import com.example.dailylife.state.AccountState
 import com.example.dailylife.transformation.CostTransformation
 import com.example.dailylife.transformation.DateTransformation
+import com.example.dailylife.util.convertStandardDate
 import com.example.dailylife.util.getToday
 import com.example.dailylife.util.noRippleClick
 import com.example.dailylife.util.roundRippleClickable
 import com.example.dailylife.util.showSnackbarShort
 import com.example.dailylife.util.topBarModifier
 import com.example.dailylife.viewmodel.AccountViewModel
+import com.example.dailylife.viewmodel.AccountSelectorViewModel
 import com.example.data.entitiy.AccountEntity
 import com.example.domain.state.AccountContinuationState
 import kotlinx.coroutines.flow.collectLatest
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun AddAccountScreen(
     accountViewModel: AccountViewModel,
-    onBackAction: () -> Unit
+    accountSelectorViewModel: AccountSelectorViewModel,
+    editAccountItem: AccountEntity?,
+    goListEditScreen: (String) -> Unit,
+    onBackAction: () -> Unit,
 ) {
     val context = LocalContext.current
     var accountState by remember { mutableStateOf(AccountState.INCOME) }
     val snackbarState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var isShowSelectAccountInfoBox by remember { mutableStateOf("") }
+
+    BackHandler {
+        if(isShowSelectAccountInfoBox.isNotBlank()) isShowSelectAccountInfoBox = ""
+        else onBackAction()
+    }
 
     LaunchedEffect(accountViewModel.accountContinuationError) {
         accountViewModel.accountContinuationError.collectLatest { error ->
@@ -98,7 +111,6 @@ fun AddAccountScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(colorResource(R.color.ivory))
-                    .padding(it)
             ) {
                 AddAccountTopBarArea(
                     modifier = Modifier.topBarModifier(),
@@ -123,8 +135,23 @@ fun AddAccountScreen(
                 EditInfoArea(
                     modifier = Modifier.weight(1f),
                     accountState = accountState,
-                    onSave = { item -> accountViewModel.addAccountItem(item) },
-                    onShowAccountInfoBox = { kind -> isShowSelectAccountInfoBox = kind }
+                    accountSelectorViewModel = accountSelectorViewModel,
+                    editAccountItem = editAccountItem,
+                    isShowSelectAccountInfoBox = isShowSelectAccountInfoBox,
+                    onSave = { item ->
+                        if(editAccountItem == null) accountViewModel.addAccountItem(item)
+                        else accountViewModel.updateAccountItem(
+                            editAccountItem.copy(
+                                kind = item.kind,
+                                date = item.date,
+                                cost = item.cost,
+                                classification = item.classification,
+                                cardCompany = item.cardCompany,
+                                content = item.content
+                            )
+                        )
+                    },
+                    onShowAccountInfoBox = { kind -> isShowSelectAccountInfoBox = kind },
                 )
             }
 
@@ -132,9 +159,7 @@ fun AddAccountScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .noRippleClick(
-                            onClick = { isShowSelectAccountInfoBox = "" }
-                        ),
+                        .noRippleClick(onClick = { isShowSelectAccountInfoBox = "" }),
                     contentAlignment = Alignment.BottomCenter
                 ) {
                     AccountSelectorBox(
@@ -142,7 +167,15 @@ fun AddAccountScreen(
                             .fillMaxWidth()
                             .fillMaxHeight(0.5f),
                         title = isShowSelectAccountInfoBox,
-                        onClose = { isShowSelectAccountInfoBox = "" }
+                        goListEditScreen = goListEditScreen,
+                        onClose = { isShowSelectAccountInfoBox = "" },
+                        onButtonClick = {
+                            when(isShowSelectAccountInfoBox) {
+                                getString(context, R.string.classification) -> accountSelectorViewModel.setSelectedClassification(it)
+                                getString(context, R.string.card_company) -> accountSelectorViewModel.setSelectedCardCompany(it)
+                            }
+                        },
+                        accountSelectorViewModel = accountSelectorViewModel
                     )
                 }
             }
@@ -258,8 +291,11 @@ fun AccountButton(
 fun EditInfoArea(
     modifier: Modifier,
     accountState: AccountState,
+    isShowSelectAccountInfoBox: String,
+    accountSelectorViewModel: AccountSelectorViewModel,
+    editAccountItem: AccountEntity?,
     onSave: (AccountEntity) -> Unit,
-    onShowAccountInfoBox: (String) -> Unit
+    onShowAccountInfoBox: (String) -> Unit,
 ) {
     val context = LocalContext.current
     val infoKind = when(accountState) {
@@ -267,18 +303,30 @@ fun EditInfoArea(
         AccountState.EXPEND -> stringResource(R.string.expend)
         else -> stringResource(R.string.error)
     }
-    var infoDate by remember { mutableStateOf("") }
-    var infoCost by remember { mutableStateOf("") }
-    var infoClassification by remember { mutableStateOf("") }
-    var cardCompany by remember { mutableStateOf("") }
-    var infoContent by remember { mutableStateOf("") }
+    var infoDate by remember { mutableStateOf((editAccountItem?.date ?: getToday()).split("-").joinToString("")) }
+    var infoCost by remember { mutableStateOf(editAccountItem?.cost?.toString() ?: "") }
+    var infoClassification by remember { mutableStateOf(editAccountItem?.classification ?: "") }
+    var infoCardCompany by remember { mutableStateOf(editAccountItem?.cardCompany ?: "") }
+    var infoContent by remember { mutableStateOf(editAccountItem?.content ?: "") }
+
+    LaunchedEffect(accountSelectorViewModel.selectedClassification) {
+        accountSelectorViewModel.selectedClassification.collectLatest {
+            infoClassification = it
+        }
+    }
+
+    LaunchedEffect(accountSelectorViewModel.selectedCardCompany) {
+        accountSelectorViewModel.selectedCardCompany.collectLatest {
+            infoCardCompany = it
+        }
+    }
 
     Column(
         modifier = modifier.padding(horizontal = 10.dp)
     ) {
         EditItem(
             text = stringResource(R.string.date),
-            subText = getToday().split("-").joinToString(""),
+            subText = infoDate,
             accountState = accountState,
             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
             onTextChange = { infoDate = it },
@@ -287,6 +335,7 @@ fun EditInfoArea(
 
         EditItem(
             text = stringResource(R.string.cost),
+            subText = infoCost,
             accountState = accountState,
             keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
             onTextChange = { infoCost = it },
@@ -295,22 +344,25 @@ fun EditInfoArea(
 
         EditItem(
             text = stringResource(R.string.classification),
+            subText = infoClassification,
             accountState = accountState,
             isTextField = false,
-            onTextChange = { infoClassification = it },
+            isFocus = isShowSelectAccountInfoBox.isNotEmpty(),
             onShowAccountInfoBox = { onShowAccountInfoBox(getString(context, R.string.classification)) }
         )
 
         EditItem(
             text = stringResource(R.string.card_company),
+            subText = infoCardCompany,
             accountState = accountState,
             isTextField = false,
-            onTextChange = { cardCompany = it },
+            isFocus = isShowSelectAccountInfoBox.isNotEmpty(),
             onShowAccountInfoBox = { onShowAccountInfoBox(getString(context, R.string.card_company)) }
         )
 
         EditItem(
             text = stringResource(R.string.content),
+            subText = infoContent,
             accountState = accountState,
             onTextChange = { infoContent = it }
         )
@@ -324,10 +376,10 @@ fun EditInfoArea(
                 onSave(
                     makeAccountItem(
                         kind = infoKind,
-                        date = infoDate.takeIf { it.isNotBlank() } ?: getToday(),
-                        cost = if(infoCost.isNotBlank()) infoCost.substring(0, infoCost.lastIndex).toLong() else 0,
+                        date = infoDate.convertStandardDate(),
+                        cost = if(infoCost.isEmpty()) 0 else infoCost.toLong(),
                         classification = getString(context, R.string.etc).takeIf { infoClassification.isBlank() } ?: infoClassification,
-                        cardCompany = getString(context, R.string.money).takeIf { cardCompany.isBlank() } ?: cardCompany,
+                        cardCompany = getString(context, R.string.money).takeIf { infoCardCompany.isBlank() } ?: infoCardCompany,
                         content = getString(context, R.string.etc).takeIf { infoContent.isBlank() } ?: infoContent
                     )
                 )
@@ -344,7 +396,8 @@ fun EditItem(
     keyboardOptions: KeyboardOptions? = null,
     visualTransformation: VisualTransformation? = null,
     isTextField: Boolean = true,
-    onTextChange: (String) -> Unit,
+    isFocus: Boolean? = null,
+    onTextChange: ((String) -> Unit)? = null,
     onShowAccountInfoBox: (() -> Unit)? = null
 ) {
     var textField by remember { mutableStateOf(TextFieldValue(subText ?: "")) }
@@ -382,21 +435,18 @@ fun EditItem(
                 visualTransformation = visualTransformation ?: VisualTransformation.None,
                 onValueChange = {
                     textField = TextFieldValue(it)
-                    onTextChange(it)
+                    onTextChange?.invoke(it)
                 }
             )
         } else {
             AccountEditText(
                 modifier = Modifier.
-                    noRippleClick(
-                        onClick = onShowAccountInfoBox!!
-                    ),
-                text = textField.text,
-                focusedIndicatorColor = focusedIndicatorColor,
-                onValueChange = {
-                    textField = TextFieldValue(it)
-                    onTextChange(it)
-                }
+                noRippleClick(
+                    onClick = onShowAccountInfoBox!!
+                ),
+                text = subText?:"",
+                isFocus = isFocus ?: false,
+                focusedIndicatorColor = focusedIndicatorColor
             )
         }
     }
@@ -411,8 +461,7 @@ fun SaveButton(
             .fillMaxWidth()
             .height(30.dp)
             .background(
-                color = colorResource(R.color.gray_asparagus3),
-                shape = RoundedCornerShape(16.dp)
+                color = colorResource(R.color.gray_asparagus), shape = RoundedCornerShape(16.dp)
             )
             .noRippleClick(
                 onClick = onSave

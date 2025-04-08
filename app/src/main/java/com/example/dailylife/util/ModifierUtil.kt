@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -69,6 +68,14 @@ fun Modifier.clickableSingle(
         onClick = { multiClickEventCutter.processEvent { onClick() } },
         interactionSource = interactionSource,
         indication = indication
+    )
+}
+
+@Composable
+fun Modifier.clickableBlock(): Modifier = composed {
+    Modifier.clickable(
+        enabled = false,
+        onClick = { }
     )
 }
 

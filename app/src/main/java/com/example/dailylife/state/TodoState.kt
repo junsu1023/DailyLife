@@ -6,5 +6,6 @@ enum class TodoState {
     FUTURE,
     COMPLETE,
     TODO,
-    DATE_COMPLETE
+    DATE_COMPLETE,
+    ETC
 }

@@ -10,6 +10,7 @@ import com.example.data.mapper.convertAccountItemEntity
 import com.example.data.mapper.convertAccountItemModel
 import com.example.domain.usecase.account.AddAccountItemUseCase
 import com.example.domain.usecase.account.DeleteAccountItemUseCase
+import com.example.domain.usecase.account.GetAllAccountInfoUseCase
 import com.example.domain.usecase.account.GetCurrentYMAccountInfoUseCase
 import com.example.domain.usecase.account.UpdateAccountItemUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,6 +27,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AccountViewModel @Inject constructor(
+    private val getAllAccountInfoUseCase: GetAllAccountInfoUseCase,
     private val getCurrentYMAccountInfoUseCase: GetCurrentYMAccountInfoUseCase,
     private val addAccountItemUseCase: AddAccountItemUseCase,
     private val deleteAccountItemUseCase: DeleteAccountItemUseCase,
@@ -33,6 +35,9 @@ class AccountViewModel @Inject constructor(
 ): BaseViewModel() {
     private val _currentYM = MutableStateFlow<YearMonth>(YearMonth.from(LocalDate.now()))
     val currentYM: StateFlow<YearMonth> get() = _currentYM.asStateFlow()
+
+    private val _allAccountList = MutableStateFlow<List<AccountEntity>>(emptyList())
+    val allAccountList: StateFlow<List<AccountEntity>> get() = _allAccountList.asStateFlow()
 
     private val _currentYMAccountList = MutableStateFlow<List<AccountEntity>>(emptyList())
     val currentYMAccountList: StateFlow<List<AccountEntity>> get() = _currentYMAccountList.asStateFlow()
@@ -58,12 +63,18 @@ class AccountViewModel @Inject constructor(
         }
     }
 
-    fun getCurrentMonthAccountInfo() = onIO {
+    private fun getAllAccountList() = onIO {
+        _allAccountList.update {
+            getAllAccountInfoUseCase().map { it.convertAccountItemEntity() }
+        }
+    }
+
+    private fun getCurrentMonthAccountInfo() = onIO {
         _currentYMAccountList.update {
             getCurrentYMAccountInfoUseCase(_currentYM.value.convertDBString()).map { it.convertAccountItemEntity() }
         }
 
-        groupSameDate()
+        publishEvent(Event.NeedGroup)
     }
 
     fun addAccountItem(accountItem: AccountEntity) = onIO {
@@ -98,7 +109,7 @@ class AccountViewModel @Inject constructor(
             _currentYM.value.plusMonths(1)
         }
 
-        refresh()
+        publishEvent(Event.NeedRefresh)
     }
 
     fun decreaseCurrentYM() = onDefault {
@@ -106,7 +117,7 @@ class AccountViewModel @Inject constructor(
             _currentYM.value.minusMonths(1)
         }
 
-        refresh()
+        publishEvent(Event.NeedRefresh)
     }
 
     private fun groupSameDate() {
@@ -125,7 +136,8 @@ class AccountViewModel @Inject constructor(
 
     fun getTotal(kind: String): Long = _currentYMAccountList.value.filter { it.kind == kind }.sumOf { it.cost }
 
-    fun refresh() {
+    private fun refresh() {
+        getAllAccountList()
         getCurrentMonthAccountInfo()
     }
 }

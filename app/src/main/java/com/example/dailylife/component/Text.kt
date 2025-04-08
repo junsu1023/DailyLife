@@ -6,7 +6,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
@@ -23,7 +26,8 @@ fun AccountCommonText(
         text = text,
         style = TextStyle(
             color = color,
-            fontSize = fontSize
+            fontSize = fontSize,
+            textAlign = TextAlign.Start
         ),
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
@@ -35,15 +39,22 @@ fun AccountCommonText(
 fun AccountEditText(
     modifier: Modifier,
     text: String,
-    focusedIndicatorColor: Color,
-    onValueChange: (String) -> Unit
+    isFocus: Boolean,
+    focusedIndicatorColor: Color
 ) {
     Column(
         modifier = modifier
     ) {
-        Text(text = text)
+        Text(
+            text = text,
+            style = TextStyle(
+                fontSize = 14.sp,
+                platformStyle = PlatformTextStyle(includeFontPadding = false),
+                fontFamily = FontFamily.Default
+            )
+        )
         HorizontalDivider(
-            color = colorResource(R.color.gray)
+            color = if(isFocus) focusedIndicatorColor else colorResource(R.color.gray)
         )
     }
 }

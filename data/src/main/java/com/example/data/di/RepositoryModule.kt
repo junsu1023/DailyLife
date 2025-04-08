@@ -1,12 +1,15 @@
 package com.example.data.di
 
 import com.example.data.datasource.AccountDataSource
+import com.example.data.datasource.CardCompanyDataSource
 import com.example.data.datasource.ClassificationDataSource
 import com.example.data.datasource.TodoDataSource
 import com.example.data.repository.AccountRepositoryImpl
+import com.example.data.repository.CardCompanyRepositoryImpl
 import com.example.data.repository.ClassificationRepositoryImpl
 import com.example.data.repository.TodoRepositoryImpl
 import com.example.domain.repository.AccountRepository
+import com.example.domain.repository.CardCompanyRepository
 import com.example.domain.repository.ClassificationRepository
 import com.example.domain.repository.TodoRepository
 import dagger.Module
@@ -40,5 +43,12 @@ object RepositoryModule {
         classificationDataSource: ClassificationDataSource
     ): ClassificationRepository {
         return ClassificationRepositoryImpl(classificationDataSource)
+    }
+
+    @Provides
+    fun provideCardCompanyRepository(
+        cardCompanyDataSource: CardCompanyDataSource
+    ): CardCompanyRepository {
+        return CardCompanyRepositoryImpl(cardCompanyDataSource)
     }
 }

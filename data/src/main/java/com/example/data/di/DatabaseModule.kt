@@ -36,4 +36,7 @@ object DatabaseModule {
 
     @Provides
     fun provideClassificationDao(accountDatabase: AccountDatabase) = accountDatabase.classificationDao()
+
+    @Provides
+    fun provideCardCompanyDao(accountDatabase: AccountDatabase) = accountDatabase.cardCompanyDao()
 }

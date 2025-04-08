@@ -5,5 +5,6 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "classification_db")
 data class ClassificationEntity(
-    @PrimaryKey(autoGenerate = false) val classification: String
+    @PrimaryKey(autoGenerate = false) val id: Long? = null,
+    val classification: String
 )

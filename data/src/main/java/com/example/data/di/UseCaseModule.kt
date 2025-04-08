@@ -1,11 +1,13 @@
 package com.example.data.di
 
 import com.example.domain.repository.AccountRepository
+import com.example.domain.repository.CardCompanyRepository
 import com.example.domain.repository.ClassificationRepository
 import com.example.domain.repository.TodoRepository
 import com.example.domain.usecase.account.AddAccountItemUseCase
 import com.example.domain.usecase.todo.AddTodoUseCase
 import com.example.domain.usecase.account.DeleteAccountItemUseCase
+import com.example.domain.usecase.account.GetAllAccountInfoUseCase
 import com.example.domain.usecase.todo.DeleteTodoUseCase
 import com.example.domain.usecase.todo.GetAllTodoListUseCase
 import com.example.domain.usecase.todo.GetCompleteTodoListOfDateUseCase
@@ -16,6 +18,10 @@ import com.example.domain.usecase.todo.GetCompleteTodoListOfTodayUseCase
 import com.example.domain.usecase.account.GetCurrentYMAccountInfoUseCase
 import com.example.domain.usecase.todo.GetTodoListOfTodayUseCase
 import com.example.domain.usecase.account.UpdateAccountItemUseCase
+import com.example.domain.usecase.cardcompany.AddCardCompanyUseCase
+import com.example.domain.usecase.cardcompany.DeleteCardCompanyUseCase
+import com.example.domain.usecase.cardcompany.GetCardCompanyListUseCase
+import com.example.domain.usecase.cardcompany.UpdateCardCompanyUseCase
 import com.example.domain.usecase.classification.AddClassificationUseCase
 import com.example.domain.usecase.classification.DeleteClassificationUseCase
 import com.example.domain.usecase.classification.GetClassificationListUseCase
@@ -62,6 +68,9 @@ object UseCaseModule {
 
     // Account
     @Provides
+    fun provideGetAllAccountInfoUseCase(accountRepository: AccountRepository) = GetAllAccountInfoUseCase(accountRepository)
+
+    @Provides
     fun provideGetCurrentYMAccountInfoUseCase(accountRepository: AccountRepository) = GetCurrentYMAccountInfoUseCase(accountRepository)
 
     @Provides
@@ -85,4 +94,17 @@ object UseCaseModule {
 
     @Provides
     fun provideUpdateClassificationUseCase(classificationRepository: ClassificationRepository) = UpdateClassificationUseCase(classificationRepository)
+
+    // CardCompany
+    @Provides
+    fun provideGetCardCompanyListUseCase(cardCompanyRepository: CardCompanyRepository) = GetCardCompanyListUseCase(cardCompanyRepository)
+
+    @Provides
+    fun provideAddCardCompanyUseCase(cardCompanyRepository: CardCompanyRepository) = AddCardCompanyUseCase(cardCompanyRepository)
+
+    @Provides
+    fun provideDeleteCardCompanyUseCase(cardCompanyRepository: CardCompanyRepository) = DeleteCardCompanyUseCase(cardCompanyRepository)
+
+    @Provides
+    fun provideUpdateCardCompanyUseCase(cardCompanyRepository: CardCompanyRepository) = UpdateCardCompanyUseCase(cardCompanyRepository)
 }

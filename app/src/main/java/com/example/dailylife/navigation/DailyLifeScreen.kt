@@ -9,6 +9,8 @@ enum class DailyLifeScreen {
     Calendar,
     AccountBook,
     AddAccount,
+    EditList,
+    EditAddList,
 }
 
 sealed class DailyLifeItem(

@@ -1,9 +1,11 @@
 <resources>
     <string name="app_name">DailyLife</string>
-    <string name="title_activity_main">MainActivity</string>
+    <string name="title_activity_main">DailyLife</string>
 
     <!-- common -->
     <string name="error">에러</string>
+    <string name="exit">종료하시겠습니까?</string>
+    <string name="exit_dialog_description">확인 버튼을 클릭 시 앱이 종료됩니다.</string>
 
     <!-- TODO -->
     <string name="todo_list">Todo</string>
@@ -65,4 +67,7 @@
     <string name="invalid_cost">금액 범위가 잘못됬습니다.(1원~10억원)</string>
     <string name="money">현금</string>
     <string name="card_company">카드사</string>
+    <string name="edit">편집</string>
+    <string name="input_add_item">추가할 아이템을 입력하세요.</string>
+    <string name="expenditure_info">지출 정보</string>
 </resources>
