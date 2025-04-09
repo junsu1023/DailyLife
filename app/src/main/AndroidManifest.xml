@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="LockedOrientationActivity">
 
     <application
         android:name=".DailyLifeApplication"
@@ -17,7 +18,8 @@
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/title_activity_main"
-            android:theme="@style/Theme.DailyLife">
+            android:theme="@style/Theme.DailyLife"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

@@ -102,6 +102,7 @@ fun TextField(
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.Clear,
+                                tint = colorResource(R.color.black),
                                 contentDescription = null
                             )
                         }

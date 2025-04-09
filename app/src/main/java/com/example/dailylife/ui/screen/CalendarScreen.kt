@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -58,9 +59,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.core.event.Event
 import com.example.dailylife.R
 import com.example.dailylife.component.CheckDialog
+import com.example.dailylife.component.DatePickerDialog
 import com.example.dailylife.component.IconSelectorContainer
 import com.example.dailylife.component.TodoBottomSheet
-import com.example.dailylife.component.TodoDatePickerDialog
 import com.example.dailylife.state.CalendarSize
 import com.example.dailylife.state.CalendarState
 import com.example.dailylife.state.TodoState
@@ -96,191 +97,207 @@ fun CalendarScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    BoxWithConstraints {
-        val halfHeight = remember { maxHeight / 2 }
-        val fullHeight = remember { maxHeight }
-        val calendarState = rememberCalendarState()
+    val calendarState = rememberCalendarState()
 
-        var isShowSelectContainer by remember { mutableStateOf(false) }
-        var isShowTodoEditScreen by remember { mutableStateOf(false) }
-        var isShowBottomSheet by remember { mutableStateOf(false) }
-        var isShowCheckDeleteDialog by remember { mutableStateOf(false) }
-        var isShowExitDialog by remember { mutableStateOf(false) }
-        val todoDialogState by todoViewModel.todoDialogState.collectAsStateWithLifecycle()
+    var isShowSelectContainer by remember { mutableStateOf(false) }
+    var isShowTodoEditScreen by remember { mutableStateOf(false) }
+    var isShowBottomSheet by remember { mutableStateOf(false) }
+    var isShowCheckDeleteDialog by remember { mutableStateOf(false) }
+    var isShowExitDialog by remember { mutableStateOf(false) }
+    val todoDialogState by todoViewModel.todoDialogState.collectAsStateWithLifecycle()
 
-        var selectorContainerOffset by remember { mutableStateOf(Pair(Offset.Zero, Offset.Zero)) }
-        var topBarHeight by remember { mutableFloatStateOf(0f) }
-        var headerHeight by remember { mutableFloatStateOf(0f) }
-        var iconSelectorContainerSize by remember { mutableStateOf(IntSize(0, 0)) }
-        var updateTodoItem by remember { mutableStateOf<Any?>(null) }
+    var selectorContainerOffset by remember { mutableStateOf(Pair(Offset.Zero, Offset.Zero)) }
+    var topBarHeight by remember { mutableFloatStateOf(0f) }
+    var headerHeight by remember { mutableFloatStateOf(0f) }
+    var iconSelectorContainerSize by remember { mutableStateOf(IntSize(0, 0)) }
+    var updateTodoItem by remember { mutableStateOf<Any?>(null) }
 
-        var calendarHeight by remember { mutableStateOf(if (calendarState.calendarSize == CalendarSize.FULL) fullHeight else halfHeight) }
-        val animatedHeight by animateDpAsState(calendarHeight)
+    BackHandler {
+        isShowExitDialog = true
+    }
 
-        BackHandler {
-            isShowExitDialog = true
-        }
-
-        LaunchedEffect(todoViewModel.todoItemContinuationError) {
-            todoViewModel.todoItemContinuationError.collectLatest { throwable ->
-                when(throwable) {
-                    FailedState.FailedAdd -> snackbarHostState.showSnackbarShort(scope, getString(context, R.string.failed_add_todo))
-                    FailedState.FailedDelete -> snackbarHostState.showSnackbarShort(scope, getString(context, R.string.failed_delete_todo))
-                    FailedState.FailedUpdate -> snackbarHostState.showSnackbarShort(scope, getString(context, R.string.failed_update_todo))
-                }
-            }
-        }
-
-        Column(
-            modifier = Modifier
-                .background(colorResource(R.color.ivory))
-                .pointerInput(Unit) {
-                    detectVerticalDragGestures(onVerticalDrag = { change, dragAmount ->
-                        change.consume()
-                        calendarHeight = (calendarHeight + dragAmount.toDp()).coerceIn(halfHeight, fullHeight)
-                    }, onDragEnd = {
-                        when (calendarState.calendarSize) {
-                            CalendarSize.HALF -> if (calendarHeight > halfHeight) {
-                                calendarState.calendarSize = CalendarSize.FULL
-                                calendarHeight = fullHeight
-                            }
-
-                            CalendarSize.FULL -> if (calendarHeight < fullHeight) {
-                                calendarState.calendarSize = CalendarSize.HALF
-                                calendarHeight = halfHeight
-                            }
-                        }
-                    })
-                }
-        ) {
-            CalendarArea(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(animatedHeight),
-                calendarState = calendarState,
-                todoViewModel = todoViewModel,
-                accountViewModel = accountViewModel,
-                isHalfMode = calendarHeight == halfHeight,
+    Scaffold(
+        topBar = {
+            CalendarTopBarArea(
+                pageYearAndMonth = calendarState.currentPageYM,
                 showAddBottomSheet = { isShowBottomSheet = true },
-                onClick = {
-                    calendarState.calendarSize = CalendarSize.HALF
-                    calendarHeight = halfHeight
-                },
                 callBackTopBarHeight = { topBarHeight = it },
                 goAddAccountScreen = goAddAccountScreen
             )
 
             HorizontalDivider(
-                color = colorResource(R.color.calendar_divider),
-                thickness = 1.dp,
-                modifier = Modifier.padding(16.dp, 8.dp, 16.dp, 0.dp)
+                color = colorResource(R.color.platinum),
+                thickness = 1.dp
             )
+        },
+        bottomBar = {
+            Box(modifier = Modifier.size(0.dp))
+        }
+    ) {
+        BoxWithConstraints(
+            modifier = Modifier.padding(it)
+        ) {
+            val halfHeight = remember { maxHeight / 2 }
+            val fullHeight = remember { maxHeight }
+            var calendarHeight by remember { mutableStateOf(if (calendarState.calendarSize == CalendarSize.FULL) fullHeight else halfHeight) }
+            val animatedHeight by animateDpAsState(calendarHeight)
+
+            LaunchedEffect(todoViewModel.todoItemContinuationError) {
+                todoViewModel.todoItemContinuationError.collectLatest { throwable ->
+                    when (throwable) {
+                        FailedState.FailedAdd -> snackbarHostState.showSnackbarShort(scope, getString(context, R.string.failed_add_todo))
+                        FailedState.FailedDelete -> snackbarHostState.showSnackbarShort(scope, getString(context, R.string.failed_delete_todo))
+                        FailedState.FailedUpdate -> snackbarHostState.showSnackbarShort(scope, getString(context, R.string.failed_update_todo))
+                    }
+                }
+            }
 
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(fullHeight - animatedHeight)
-            ) {
-                DayDiffInfoArea(calendarState)
+                    .background(colorResource(R.color.ivory))
+                    .pointerInput(Unit) {
+                        detectVerticalDragGestures(onVerticalDrag = { change, dragAmount ->
+                            change.consume()
+                            calendarHeight = (calendarHeight + dragAmount.toDp()).coerceIn(halfHeight, fullHeight)
+                        }, onDragEnd = {
+                            when (calendarState.calendarSize) {
+                                CalendarSize.HALF -> if (calendarHeight > halfHeight) {
+                                    calendarState.calendarSize = CalendarSize.FULL
+                                    calendarHeight = fullHeight
+                                }
 
-                TodoListOfDateArea(
+                                CalendarSize.FULL -> if (calendarHeight < fullHeight) {
+                                    calendarState.calendarSize = CalendarSize.HALF
+                                    calendarHeight = halfHeight
+                                }
+                            }
+                        })
+                    }
+            ) {
+                CalendarArea(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(animatedHeight),
+                    calendarState = calendarState,
                     todoViewModel = todoViewModel,
                     accountViewModel = accountViewModel,
-                    callBackOffset = {
-                        selectorContainerOffset = it
-                        isShowSelectContainer = true
+                    isHalfMode = calendarHeight == halfHeight,
+                    onClick = {
+                        calendarState.calendarSize = CalendarSize.HALF
+                        calendarHeight = halfHeight
+                    }
+                )
+
+                HorizontalDivider(
+                    color = colorResource(R.color.calendar_divider),
+                    thickness = 1.dp,
+                    modifier = Modifier.padding(16.dp, 8.dp, 16.dp, 0.dp)
+                )
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(fullHeight - animatedHeight)
+                ) {
+                    DayDiffInfoArea(calendarState)
+
+                    TodoListOfDateArea(
+                        todoViewModel = todoViewModel,
+                        accountViewModel = accountViewModel,
+                        callBackOffset = {
+                            selectorContainerOffset = it
+                            isShowSelectContainer = true
+                        },
+                        callBackHeaderHeight = { headerHeight = it },
+                        callBackTodoItem = { updateTodoItem = it },
+                        callBackAccountItem = { updateTodoItem = it },
+                        callBackShowDialogState = { isShowCheckDeleteDialog = true },
+                        showTodoEditScreen = { isShowTodoEditScreen = true },
+                        onClickAccountItem = onClickAccountItem
+                    )
+                }
+            }
+
+            if (isShowSelectContainer) {
+                IconSelectorContainer(
+                    todoItem = updateTodoItem as TodoEntity,
+                    todoViewModel = todoViewModel,
+                    selectorContainerOffset = selectorContainerOffset,
+                    topBarHeight = topBarHeight,
+                    headerHeight = headerHeight,
+                    floatingActionButtonHeight = 0f,
+                    iconSelectorContainerSize = iconSelectorContainerSize,
+                    maxHeight = maxHeight.value,
+                    callBackContainerSize = { iconSelectorContainerSize = it },
+                    isShowSelectContainer = { isShowSelectContainer = it })
+            }
+
+            if (isShowBottomSheet) {
+                TodoBottomSheet(
+                    todoViewModel = todoViewModel,
+                    closeSheet = { isShowBottomSheet = false },
+                    onSaveTodo = { todoItem ->
+                        todoViewModel.addTodoList(todoItem)
                     },
-                    callBackHeaderHeight = { headerHeight = it },
-                    callBackTodoItem = { updateTodoItem = it },
-                    callBackAccountItem = { updateTodoItem = it },
-                    callBackShowDialogState = { isShowCheckDeleteDialog = true },
-                    showTodoEditScreen = { isShowTodoEditScreen = true },
-                    onClickAccountItem = onClickAccountItem
+                    showBlankSnackBar = {
+                        scope.launch {
+                            snackbarHostState.showSnackbarShort(scope, getString(context, R.string.blank_text))
+                        }
+                    },
                 )
             }
-        }
 
-        if(isShowSelectContainer) {
-            IconSelectorContainer(
-                todoItem = updateTodoItem as TodoEntity,
-                todoViewModel = todoViewModel,
-                selectorContainerOffset = selectorContainerOffset,
-                topBarHeight = topBarHeight,
-                headerHeight = headerHeight,
-                iconSelectorContainerSize = iconSelectorContainerSize,
-                maxHeight = maxHeight.value,
-                callBackContainerSize = { iconSelectorContainerSize = it },
-                isShowSelectContainer = { isShowSelectContainer = it }
-            )
-        }
+            if (isShowTodoEditScreen) {
+                TodoEditScreen(
+                    modifier = Modifier.align(Alignment.Center),
+                    todoItem = updateTodoItem as TodoEntity,
+                    todoViewModel = todoViewModel,
+                    calendarState = calendarState,
+                    hideTodoEditScreen = { isShowTodoEditScreen = false },
+                    showBlankSnackBar = {
+                        scope.launch {
+                            snackbarHostState.showSnackbarShort(scope, getString(context, R.string.blank_text))
+                        }
+                    },
+                    onClick = { isShowTodoEditScreen = false })
+            }
 
-        if(isShowBottomSheet) {
-            TodoBottomSheet(
-                todoViewModel = todoViewModel,
-                closeSheet = { isShowBottomSheet = false },
-                onSaveTodo = { todoItem ->
-                    todoViewModel.addTodoList(todoItem)
-                },
-                showBlankSnackBar = {
-                    scope.launch {
-                        snackbarHostState.showSnackbarShort(scope, getString(context, R.string.blank_text))
+            if (todoDialogState.isShowDialog) {
+                DatePickerDialog(
+                    selectedDate = todoDialogState.selectedDate,
+                    onClickConfirm = { date ->
+                        with(todoViewModel) {
+                            hiddenTodoDateDialog()
+                            updateTodoDate(date)
+                            setSelectedDate(date)
+                        }
+                    },
+                    onClickCancel = { todoViewModel.hiddenTodoDateDialog() })
+            }
+
+            if (isShowCheckDeleteDialog) {
+                CheckDialog(
+                    title = stringResource(R.string.delete_dialog_title),
+                    description = stringResource(R.string.delete_dialog_description),
+                    onClickCancel = { isShowCheckDeleteDialog = false },
+                    onClickConfirm = {
+                        if (updateTodoItem is TodoEntity) todoViewModel.deleteTodoList(updateTodoItem as TodoEntity)
+                        else if (updateTodoItem is AccountEntity) accountViewModel.deleteAccountItem(updateTodoItem as AccountEntity)
+
+                        isShowCheckDeleteDialog = false
                     }
-                },
-            )
-        }
+                )
+            }
 
-        if(isShowTodoEditScreen) {
-            TodoEditScreen(
-                modifier = Modifier.align(Alignment.Center),
-                todoItem = updateTodoItem as TodoEntity,
-                todoViewModel = todoViewModel,
-                calendarState = calendarState,
-                hideTodoEditScreen = { isShowTodoEditScreen = false },
-                showBlankSnackBar = {
-                    scope.launch {
-                        snackbarHostState.showSnackbarShort(scope, getString(context, R.string.blank_text))
-                    }
-                },
-                onClick = { isShowTodoEditScreen = false }
-            )
-        }
-
-        if(todoDialogState.isShowDialog) {
-            TodoDatePickerDialog(
-                selectedDate = todoDialogState.selectedDate,
-                onClickConfirm = { date ->
-                    with(todoViewModel) {
-                        hiddenTodoDateDialog()
-                        updateTodoDate(date)
-                        setSelectedDate(date)
-                    }
-                },
-                onClickCancel = { todoViewModel.hiddenTodoDateDialog() }
-            )
-        }
-
-        if(isShowCheckDeleteDialog) {
-            CheckDialog(
-                title = stringResource(R.string.delete_dialog_title),
-                description = stringResource(R.string.delete_dialog_description),
-                onClickCancel = { isShowCheckDeleteDialog = false },
-                onClickConfirm = {
-                    if(updateTodoItem is TodoEntity) todoViewModel.deleteTodoList(updateTodoItem as TodoEntity)
-                    else if(updateTodoItem is AccountEntity) accountViewModel.deleteAccountItem(updateTodoItem as AccountEntity)
-
-                    isShowCheckDeleteDialog = false
-                }
-            )
-        }
-
-        if(isShowExitDialog) {
-            CheckDialog(
-                title = stringResource(R.string.delete_dialog_title),
-                description = stringResource(R.string.exit_dialog_description),
-                leftButton = stringResource(R.string.ok),
-                onClickCancel = { isShowExitDialog = false },
-                onClickConfirm = { (context as Activity).finish() }
-            )
+            if (isShowExitDialog) {
+                CheckDialog(
+                    title = stringResource(R.string.delete_dialog_title),
+                    description = stringResource(R.string.exit_dialog_description),
+                    leftButton = stringResource(R.string.ok),
+                    onClickCancel = { isShowExitDialog = false },
+                    onClickConfirm = { (context as Activity).finish() }
+                )
+            }
         }
     }
 }
@@ -292,10 +309,7 @@ fun CalendarArea(
     todoViewModel: TodoViewModel,
     accountViewModel: AccountViewModel,
     isHalfMode: Boolean,
-    showAddBottomSheet: () -> Unit,
-    onClick: () -> Unit,
-    callBackTopBarHeight: (Float) -> Unit,
-    goAddAccountScreen: () -> Unit
+    onClick: () -> Unit
 ) {
     LaunchedEffect(calendarState.datePagerState.currentPage) {
         if (calendarState.currentPageYM != YearMonth.from(calendarState.selectedDate)) {
@@ -319,18 +333,6 @@ fun CalendarArea(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        CalendarTopBarArea(
-            pageYearAndMonth = calendarState.currentPageYM,
-            showAddBottomSheet = showAddBottomSheet,
-            callBackTopBarHeight = callBackTopBarHeight,
-            goAddAccountScreen = goAddAccountScreen
-        )
-
-        HorizontalDivider(
-            color = colorResource(R.color.platinum),
-            thickness = 1.dp
-        )
-
         Spacer(modifier = Modifier.height(10.dp))
 
         DaysArea()
@@ -424,12 +426,12 @@ fun CalendarTopBarArea(
             Icon(
                 painter = painterResource(R.drawable.add),
                 contentDescription = null,
+                tint = colorResource(R.color.black),
                 modifier = Modifier
                     .size(24.dp)
                     .roundRippleClickable(
-                    rippleColor = colorResource(R.color.black),
-                    onClick = showAddBottomSheet
-                )
+                        rippleColor = colorResource(R.color.black), onClick = showAddBottomSheet
+                    )
             )
 
             Spacer(modifier = Modifier.width(20.dp))
@@ -437,12 +439,12 @@ fun CalendarTopBarArea(
             Icon(
                 painter = painterResource(R.drawable.account_book_icon),
                 contentDescription = null,
+                tint = colorResource(R.color.black),
                 modifier = Modifier
                     .size(24.dp)
                     .roundRippleClickable(
-                    rippleColor = colorResource(R.color.black),
-                    onClick = goAddAccountScreen
-                )
+                        rippleColor = colorResource(R.color.black), onClick = goAddAccountScreen
+                    )
             )
 
             Spacer(modifier = Modifier.width(10.dp))
@@ -611,8 +613,7 @@ fun AccountCountArea(
         modifier = Modifier
             .size(15.dp)
             .background(
-                color = if(isVisibleMonth) colorResource(R.color.dark_red) else colorResource(R.color.dark_red).copy(alpha = 0.5f),
-                shape = CircleShape
+                color = if (isVisibleMonth) colorResource(R.color.dark_red) else colorResource(R.color.dark_red).copy(alpha = 0.5f), shape = CircleShape
             ),
         contentAlignment = Alignment.Center
     ) {

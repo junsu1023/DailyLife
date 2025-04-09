@@ -30,6 +30,7 @@ fun CheckBox(
     ) {
         Icon(
             painter = if(checked) painterResource(R.drawable.checkbox_selected) else painterResource(R.drawable.checkbox_unselected),
+            tint = colorResource(R.color.black),
             contentDescription = null
         )
     }

@@ -1,15 +1,16 @@
 package com.example.dailylife.ui.screen.account
 
-import android.annotation.SuppressLint
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Icon
@@ -44,7 +45,6 @@ import com.example.domain.state.FailedState
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun EditAddItemScreen(
     title: String,
@@ -67,22 +67,26 @@ fun EditAddItemScreen(
         }
     }
 
-
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarState) }
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(color = colorResource(R.color.ivory))
-        ) {
+        snackbarHost = { SnackbarHost(hostState = snackbarState) },
+        topBar = {
             EditListTopBarArea(
                 modifier = Modifier.topBarModifier(),
                 title = "$title ${stringResource(R.string.edit)}",
                 isAddMode = true,
                 clickBackButton = onBackAction
             )
-
+        },
+        bottomBar = {
+            Box(modifier = Modifier.size(0.dp))
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(color = colorResource(R.color.ivory))
+                .padding(it)
+        ) {
             var text by remember {
                 mutableStateOf(
                     when(editKind) {
@@ -114,7 +118,9 @@ fun EditAddItemScreen(
                                 onClick = { text = "" }
                             ) {
                                 Icon(
-                                    imageVector = Icons.Filled.Clear, contentDescription = null
+                                    imageVector = Icons.Filled.Clear,
+                                    tint = colorResource(R.color.black),
+                                    contentDescription = null
                                 )
                             }
                         }

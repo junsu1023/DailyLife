@@ -1,6 +1,5 @@
 package com.example.dailylife.ui.screen.account
 
-import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -14,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -65,7 +65,6 @@ import com.example.data.entitiy.AccountEntity
 import com.example.domain.state.AccountContinuationState
 import kotlinx.coroutines.flow.collectLatest
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun AddAccountScreen(
     accountViewModel: AccountViewModel,
@@ -75,7 +74,9 @@ fun AddAccountScreen(
     onBackAction: () -> Unit,
 ) {
     val context = LocalContext.current
-    var accountState by remember { mutableStateOf(AccountState.INCOME) }
+    var accountState by remember { mutableStateOf(
+        AccountState.INCOME.takeIf { (editAccountItem?.kind ?: getString(context, R.string.income)) == getString(context, R.string.income) } ?: AccountState.EXPEND)
+    }
     val snackbarState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var isShowSelectAccountInfoBox by remember { mutableStateOf("") }
@@ -102,26 +103,30 @@ fun AddAccountScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarState) }
+        snackbarHost = { SnackbarHost(hostState = snackbarState) },
+        bottomBar = { Box(modifier = Modifier.size(0.dp)) },
+        topBar = {
+            AddAccountTopBarArea(
+                modifier = Modifier.topBarModifier(),
+                title = when(accountState) {
+                    AccountState.INCOME -> stringResource(R.string.income)
+                    AccountState.EXPEND -> stringResource(R.string.expend)
+                    else -> stringResource(R.string.error)
+                },
+                clickBackButton = onBackAction
+            )
+        }
     ) {
         Box(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(it)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(colorResource(R.color.ivory))
             ) {
-                AddAccountTopBarArea(
-                    modifier = Modifier.topBarModifier(),
-                    title = when(accountState) {
-                        AccountState.INCOME -> stringResource(R.string.income)
-                        AccountState.EXPEND -> stringResource(R.string.expend)
-                        else -> stringResource(R.string.error)
-                    },
-                    clickBackButton = onBackAction
-                )
-
                 AccountButtonArea(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -199,6 +204,7 @@ fun AddAccountTopBarArea(
         Icon(
             painter = painterResource(R.drawable.back_arrow),
             contentDescription = null,
+            tint = colorResource(R.color.black),
             modifier = Modifier
                 .roundRippleClickable(
                     rippleColor = colorResource(R.color.black),
@@ -348,7 +354,7 @@ fun EditInfoArea(
             subText = infoClassification,
             accountState = accountState,
             isTextField = false,
-            isFocus = isShowSelectAccountInfoBox.isNotEmpty(),
+            isFocus = isShowSelectAccountInfoBox == stringResource(R.string.classification),
             onShowAccountInfoBox = { onShowAccountInfoBox(getString(context, R.string.classification)) }
         )
 
@@ -357,7 +363,7 @@ fun EditInfoArea(
             subText = infoCardCompany,
             accountState = accountState,
             isTextField = false,
-            isFocus = isShowSelectAccountInfoBox.isNotEmpty(),
+            isFocus = isShowSelectAccountInfoBox == stringResource(R.string.card_company),
             onShowAccountInfoBox = { onShowAccountInfoBox(getString(context, R.string.card_company)) }
         )
 

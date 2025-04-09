@@ -49,7 +49,7 @@ fun BottomNavigationBar(
         NavigationBar(
             modifier =  modifier,
             containerColor = containerColor,
-            contentColor = contentColor
+            contentColor = contentColor,
         ) {
             items.forEach { item ->
                 NavigationBarItem(

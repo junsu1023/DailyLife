@@ -48,6 +48,7 @@ fun AccountEditText(
         Text(
             text = text,
             style = TextStyle(
+                color = colorResource(R.color.black),
                 fontSize = 14.sp,
                 platformStyle = PlatformTextStyle(includeFontPadding = false),
                 fontFamily = FontFamily.Default

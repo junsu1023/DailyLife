@@ -8,6 +8,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,9 +25,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,6 +48,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -60,9 +64,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.dailylife.R
 import com.example.dailylife.component.CheckBox
 import com.example.dailylife.component.CheckDialog
+import com.example.dailylife.component.DatePickerDialog
 import com.example.dailylife.component.IconSelectorContainer
 import com.example.dailylife.component.TodoBottomSheet
-import com.example.dailylife.component.TodoDatePickerDialog
 import com.example.dailylife.state.TodoState
 import com.example.dailylife.util.convertDrawableToBitMap
 import com.example.dailylife.util.getToday
@@ -83,6 +87,7 @@ fun TodoScreen(
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val density = LocalDensity.current
 
     // show component state
     var isShowSelectContainer by remember { mutableStateOf(false) }
@@ -96,7 +101,7 @@ fun TodoScreen(
     var topBarHeight by remember { mutableFloatStateOf(0f) }
     var headerHeight by remember { mutableFloatStateOf(0f) }
     var iconSelectorContainerSize by remember { mutableStateOf(IntSize(0, 0)) }
-    var fullSizeHeight by remember { mutableFloatStateOf(0f) }
+    var floatingActionButtonHeight by remember { mutableStateOf(0f) }
 
     val todoDialogState by todoViewModel.todoDialogState.collectAsStateWithLifecycle()
     var updateTodoItem by remember { mutableStateOf<TodoEntity?>(null) }
@@ -120,16 +125,9 @@ fun TodoScreen(
         }
     }
 
-    Box(
-        modifier = Modifier
-            .onGloballyPositioned { layoutCoordinates ->
-                val fullHeight = layoutCoordinates.size.height.toFloat()
-                fullSizeHeight = fullHeight
-            }
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
+    Scaffold(
+        containerColor = colorResource(R.color.ivory),
+        topBar = {
             TodoTopBarArea(
                 isDeleteMode = isDeleteMode,
                 callBackTopBarHeight = { topBarHeight = it },
@@ -140,11 +138,39 @@ fun TodoScreen(
                 color = colorResource(R.color.platinum),
                 thickness = 1.dp
             )
-
-            Spacer(modifier = Modifier.height(5.dp))
-
+        },
+        bottomBar = {
+            Box(modifier = Modifier.size(0.dp))
+        },
+        floatingActionButton = {
+            if(!isDeleteMode) {
+                FloatingActionButton(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(
+                            color = Color.Transparent,
+                            shape = CircleShape
+                        )
+                        .onGloballyPositioned { layoutCoordinates ->
+                            floatingActionButtonHeight = layoutCoordinates.size.height.toFloat()
+                        },
+                    onClick = { isShowBottomSheet = true },
+                    containerColor = Color.Transparent,
+                    contentColor = colorResource(R.color.gray_asparagus),
+                    content = {
+                        Icon(
+                            painter = painterResource(R.drawable.add2),
+                            contentDescription = null
+                        )
+                    }
+                )
+            }
+        }
+    ) {
+        BoxWithConstraints(
+            modifier = Modifier.padding(it)
+        ) {
             TodoContentArea(
-                modifier = Modifier.weight(1f),
                 todoViewModel = todoViewModel,
                 callBackOffset = callBackOffset,
                 isDeleteMode = isDeleteMode,
@@ -153,95 +179,87 @@ fun TodoScreen(
                 callBackShowDialogState = { isShowCheckDeleteDialog = true },
                 showTodoEditScreen = { isShowTodoEditScreen = true }
             )
-        }
 
-        if(!isDeleteMode) {
-            AddTodoButtonArea(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 10.dp, bottom = 20.dp),
-                onClick = { isShowBottomSheet = true }
-            )
-        }
+            if(isShowSelectContainer) {
+                IconSelectorContainer(
+                    todoItem = updateTodoItem!!,
+                    todoViewModel = todoViewModel,
+                    selectorContainerOffset = selectorContainerOffset,
+                    topBarHeight = topBarHeight,
+                    headerHeight = headerHeight,
+                    floatingActionButtonHeight = floatingActionButtonHeight,
+                    iconSelectorContainerSize = iconSelectorContainerSize,
+                    maxHeight = with(density) { maxHeight.toPx() },
+                    callBackContainerSize = { iconSelectorContainerSize = it },
+                    isShowSelectContainer = { isShowSelectContainer = it }
+                )
+            }
 
-        if(isShowSelectContainer) {
-            IconSelectorContainer(
-                todoItem = updateTodoItem!!,
-                todoViewModel = todoViewModel,
-                selectorContainerOffset = selectorContainerOffset,
-                topBarHeight = topBarHeight,
-                headerHeight = headerHeight,
-                iconSelectorContainerSize = iconSelectorContainerSize,
-                maxHeight = fullSizeHeight,
-                callBackContainerSize = { iconSelectorContainerSize = it },
-                isShowSelectContainer = { isShowSelectContainer = it }
-            )
-        }
-
-        if(isShowBottomSheet) {
-            TodoBottomSheet(
-                todoViewModel = todoViewModel,
-                closeSheet = { isShowBottomSheet = false },
-                onSaveTodo = { todoItem ->
-                    todoViewModel.addTodoList(todoItem)
-                },
-                showBlankSnackBar = {
-                    scope.launch {
-                        snackbarHostState.showSnackbarShort(scope, getString(context, R.string.blank_text))
+            if(isShowBottomSheet) {
+                TodoBottomSheet(
+                    todoViewModel = todoViewModel,
+                    closeSheet = { isShowBottomSheet = false },
+                    onSaveTodo = { todoItem ->
+                        todoViewModel.addTodoList(todoItem)
+                    },
+                    showBlankSnackBar = {
+                        scope.launch {
+                            snackbarHostState.showSnackbarShort(scope, getString(context, R.string.blank_text))
+                        }
                     }
-                }
-            )
-        }
+                )
+            }
 
-        if(isShowCheckDeleteDialog) {
-            CheckDialog(
-                title = stringResource(R.string.delete_dialog_title),
-                description = stringResource(R.string.delete_dialog_description),
-                onClickCancel = { isShowCheckDeleteDialog = false },
-                onClickConfirm = {
-                    todoViewModel.deleteTodoList(updateTodoItem!!)
-                    isShowCheckDeleteDialog = false
-                }
-            )
-        }
-
-        if(isShowExitDialog) {
-            CheckDialog(
-                title = stringResource(R.string.exit),
-                description = stringResource(R.string.exit_dialog_description),
-                leftButton = stringResource(R.string.ok),
-                onClickCancel = { isShowExitDialog = false },
-                onClickConfirm = { (context as Activity).finish() }
-            )
-        }
-
-        if(todoDialogState.isShowDialog) {
-            TodoDatePickerDialog(
-                selectedDate = todoDialogState.selectedDate,
-                onClickConfirm = { date ->
-                    with(todoViewModel) {
-                        hiddenTodoDateDialog()
-                        updateTodoDate(date)
-                        setSelectedDate(date)
+            if(isShowCheckDeleteDialog) {
+                CheckDialog(
+                    title = stringResource(R.string.delete_dialog_title),
+                    description = stringResource(R.string.delete_dialog_description),
+                    onClickCancel = { isShowCheckDeleteDialog = false },
+                    onClickConfirm = {
+                        todoViewModel.deleteTodoList(updateTodoItem!!)
+                        isShowCheckDeleteDialog = false
                     }
-                },
-                onClickCancel = { todoViewModel.hiddenTodoDateDialog() }
-            )
-        }
+                )
+            }
 
-        if(isShowTodoEditScreen) {
-            TodoEditScreen(
-                modifier = Modifier.align(Alignment.Center),
-                todoItem = updateTodoItem!!,
-                todoViewModel = todoViewModel,
-                hideTodoEditScreen = { isShowTodoEditScreen = false },
-                showBlankSnackBar = {
-                    scope.launch {
-                        snackbarHostState.showSnackbarShort(scope, getString(context, R.string.blank_text))
-                    }
-                },
-                onClick = { isShowTodoEditScreen = false }
-            )
+            if(isShowExitDialog) {
+                CheckDialog(
+                    title = stringResource(R.string.exit),
+                    description = stringResource(R.string.exit_dialog_description),
+                    leftButton = stringResource(R.string.ok),
+                    onClickCancel = { isShowExitDialog = false },
+                    onClickConfirm = { (context as Activity).finish() }
+                )
+            }
+
+            if(todoDialogState.isShowDialog) {
+                DatePickerDialog(
+                    selectedDate = todoDialogState.selectedDate,
+                    onClickConfirm = { date ->
+                        with(todoViewModel) {
+                            hiddenTodoDateDialog()
+                            updateTodoDate(date)
+                            setSelectedDate(date)
+                        }
+                    },
+                    onClickCancel = { todoViewModel.hiddenTodoDateDialog() }
+                )
+            }
+
+            if(isShowTodoEditScreen) {
+                TodoEditScreen(
+                    modifier = Modifier.align(Alignment.Center),
+                    todoItem = updateTodoItem!!,
+                    todoViewModel = todoViewModel,
+                    hideTodoEditScreen = { isShowTodoEditScreen = false },
+                    showBlankSnackBar = {
+                        scope.launch {
+                            snackbarHostState.showSnackbarShort(scope, getString(context, R.string.blank_text))
+                        }
+                    },
+                    onClick = { isShowTodoEditScreen = false }
+                )
+            }
         }
     }
 }
@@ -266,7 +284,8 @@ fun TodoTopBarArea(
         ) {
             Icon(
                 painter = painterResource(R.drawable.fighting),
-                contentDescription = null
+                contentDescription = null,
+                tint = colorResource(R.color.black)
             )
 
             Spacer(modifier = Modifier.width(5.dp))
@@ -286,17 +305,21 @@ fun TodoTopBarArea(
 
             Icon(
                 painter = painterResource(R.drawable.fighting),
-                contentDescription = null
+                contentDescription = null,
+                tint = colorResource(R.color.black)
             )
         }
 
         Icon(
             painter = if(isDeleteMode) painterResource(R.drawable.add) else painterResource(R.drawable.delete_menu_icon),
             contentDescription = null,
+            tint = colorResource(R.color.black),
             modifier = Modifier
                 .align(Alignment.CenterEnd)
                 .padding(end = 10.dp)
-                .roundRippleClickable(rippleColor = colorResource(R.color.black), onClick = { executeDeleteMode() })
+                .roundRippleClickable(rippleColor = colorResource(R.color.black), onClick = {
+                    executeDeleteMode()
+                })
         )
     }
 }
@@ -353,6 +376,7 @@ fun TodoListContent(
             Icon(
                 painter = painterResource(R.drawable.blank_background),
                 contentDescription = null,
+                tint = colorResource(R.color.black),
                 modifier = Modifier.align(Alignment.Center)
             )
         }
@@ -474,6 +498,7 @@ fun TodoExpandButton(
         Icon(
             if(isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
             contentDescription = null,
+            tint = colorResource(R.color.black),
             modifier = Modifier.size(24.dp)
         )
     }
@@ -504,20 +529,14 @@ fun TodoItemArea(
             .fillMaxWidth()
             .height(if (isCalendarItem) 40.dp else 50.dp)
             .background(
-                color = backgroundColor,
-                shape = RoundedCornerShape(12.dp)
+                color = backgroundColor, shape = RoundedCornerShape(12.dp)
             )
-            .combinedClickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = {
-                    showTodoEditScreen()
-                    callBackTodoItem(todoItem)
-                },
-                onLongClick = {
-                    if(isCalendarItem) callBackShowDialogState()
-                }
-            ),
+            .combinedClickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = {
+                showTodoEditScreen()
+                callBackTodoItem(todoItem)
+            }, onLongClick = {
+                if (isCalendarItem) callBackShowDialogState()
+            }),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Spacer(modifier = Modifier.width(10.dp))
@@ -588,25 +607,4 @@ fun TodoItemArea(
 
         Spacer(modifier = Modifier.width(30.dp))
     }
-}
-
-@Composable
-fun AddTodoButtonArea(
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Icon(
-        painter = painterResource(R.drawable.add2),
-        contentDescription = null,
-        tint = colorResource(R.color.gray_asparagus),
-        modifier = modifier
-            .background(
-                color = Color.Transparent, shape = CircleShape
-            )
-            .size(40.dp)
-            .roundRippleClickable(
-                rippleColor = colorResource(R.color.gray_asparagus),
-                onClick = onClick
-            )
-    )
 }

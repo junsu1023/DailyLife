@@ -30,7 +30,6 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -49,6 +48,7 @@ fun IconSelectorContainer(
     selectorContainerOffset: Pair<Offset, Offset>,
     topBarHeight: Float,
     headerHeight: Float,
+    floatingActionButtonHeight: Float,
     iconSelectorContainerSize: IntSize,
     maxHeight: Float,
     callBackContainerSize: (IntSize) -> Unit,
@@ -73,12 +73,12 @@ fun IconSelectorContainer(
 
     val bottomLeftOffset = selectorContainerOffset.first
     val topLeftOffset = selectorContainerOffset.second
-    val bottomEndOffsetY = (bottomLeftOffset.y - topBarHeight + headerHeight) + iconSelectorContainerSize.height.toFloat()
+    val bottomEndOffsetY = (bottomLeftOffset.y - topBarHeight - headerHeight) + iconSelectorContainerSize.height.toFloat()
 
     val offsetX = with(density) { (bottomLeftOffset.x - iconSelectorContainerSize.width.toFloat() / 2).toDp() }
     val offsetY = with(density) {
-        if(bottomEndOffsetY >= maxHeight) (topLeftOffset.y - iconSelectorContainerSize.height.toFloat() - headerHeight).toDp()
-        else (bottomLeftOffset.y - topBarHeight + headerHeight).toDp()
+        if(bottomEndOffsetY >= maxHeight - floatingActionButtonHeight) (topLeftOffset.y - iconSelectorContainerSize.height.toFloat() - topBarHeight - headerHeight).toDp()
+        else (bottomLeftOffset.y - topBarHeight - headerHeight).toDp()
     }
 
     Box(

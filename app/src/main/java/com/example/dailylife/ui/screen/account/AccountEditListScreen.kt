@@ -1,13 +1,15 @@
 package com.example.dailylife.ui.screen.account
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -43,7 +45,6 @@ import com.example.dailylife.viewmodel.AccountSelectorViewModel
 import com.example.domain.state.FailedState
 import kotlinx.coroutines.flow.collectLatest
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun AccountEditListScreen(
     title: String,
@@ -67,20 +68,25 @@ fun AccountEditListScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarState) }
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(color = colorResource(R.color.ivory))
-        ) {
+        snackbarHost = { SnackbarHost(hostState = snackbarState) },
+        topBar = {
             EditListTopBarArea(
                 modifier = Modifier.topBarModifier(),
                 title = "$title ${stringResource(R.string.edit)}",
                 clickBackButton = onBackAction,
                 goAddTitle = goAddTitle
             )
-
+        },
+        bottomBar = {
+            Box(modifier = Modifier.size(0.dp))
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(color = colorResource(R.color.ivory))
+                .padding(it)
+        ) {
             if(title == stringResource(R.string.classification)) {
                 EditClassificationListBodyArea(
                     accountSelectorViewModel = accountSelectorViewModel,
@@ -114,6 +120,7 @@ fun EditListTopBarArea(
         Icon(
             painter = painterResource(R.drawable.back_arrow),
             contentDescription = null,
+            tint = colorResource(R.color.black),
             modifier = Modifier
                 .roundRippleClickable(
                     rippleColor = colorResource(R.color.black),
@@ -136,6 +143,7 @@ fun EditListTopBarArea(
             Icon(
                 painter = painterResource(R.drawable.add),
                 contentDescription = null,
+                tint = colorResource(R.color.black),
                 modifier = Modifier.roundRippleClickable(
                     rippleColor = colorResource(R.color.black),
                     onClick = { goAddTitle?.invoke() }

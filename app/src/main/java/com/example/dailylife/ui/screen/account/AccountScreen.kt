@@ -19,10 +19,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -63,90 +67,108 @@ fun AccountScreen(
     onClickAddButton: () -> Unit,
     onClickAccountItem: (AccountEntity) -> Unit
 ) {
+    val context = LocalContext.current
+
     var isShowCheckDeleteDialog by remember { mutableStateOf(false) }
     var isShowExitDialog by remember { mutableStateOf(false) }
     var updateAccountItem by remember { mutableStateOf<AccountEntity?>(null) }
+
+    val currentYM by accountViewModel.currentYM.collectAsStateWithLifecycle()
+    val accountOfDateGroup by accountViewModel.accountOfDateGroup.collectAsStateWithLifecycle()
+
+    var totalIncome by remember { mutableStateOf(0L) }
+    var totalExpend by remember { mutableStateOf(0L) }
+    val strIncome = stringResource(R.string.income)
+    val strExpend = stringResource(R.string.expend)
+
+    LaunchedEffect(currentYM, accountOfDateGroup) {
+        totalIncome = accountViewModel.getTotal(strIncome)
+        totalExpend = accountViewModel.getTotal(strExpend)
+    }
 
     BackHandler {
         isShowExitDialog = true
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(color = colorResource(R.color.ivory))
-    ) {
-        val context = LocalContext.current
-
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            val currentYM by accountViewModel.currentYM.collectAsStateWithLifecycle()
-            val accountOfDateGroup by accountViewModel.accountOfDateGroup.collectAsStateWithLifecycle()
-
-            var totalIncome by remember { mutableStateOf(0L) }
-            var totalExpend by remember { mutableStateOf(0L) }
-            val strIncome = stringResource(R.string.income)
-            val strExpend = stringResource(R.string.expend)
-
-            LaunchedEffect(currentYM, accountOfDateGroup) {
-                totalIncome = accountViewModel.getTotal(strIncome)
-                totalExpend = accountViewModel.getTotal(strExpend)
-            }
-
+    Scaffold(
+        topBar = {
             AccountTopBarArea(
                 ym = currentYM,
                 increaseMonth = { accountViewModel.increaseCurrentYM() },
                 decreaseMonth = { accountViewModel.decreaseCurrentYM() }
             )
-
-            HorizontalDivider()
-
-            AccountInfoArea(
-                totalIncome = totalIncome,
-                totalExpend = totalExpend
-            )
-
-            HorizontalDivider()
-
-            AccountContentArea(
-                modifier = Modifier.weight(1f),
-                accountOfDateGroup = accountOfDateGroup,
-                callBackShowDialogState = { isShowCheckDeleteDialog = true },
-                callBackAccountItem = { updateAccountItem = it },
-                onClickAccountItem = onClickAccountItem
-            )
-        }
-
-        AccountAddButton(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(bottom = 20.dp, end = 10.dp),
-            onClick = onClickAddButton
-        )
-
-        if(isShowCheckDeleteDialog) {
-            CheckDialog(
-                title = stringResource(R.string.delete_dialog_title),
-                description = stringResource(R.string.delete_dialog_description),
-                onClickCancel = {
-                    isShowCheckDeleteDialog = false
-                },
-                onClickConfirm = {
-                    accountViewModel.deleteAccountItem(updateAccountItem!!)
-                    isShowCheckDeleteDialog = false
+        },
+        bottomBar = { Box(modifier = Modifier.size(0.dp)) },
+        floatingActionButton = {
+            FloatingActionButton(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(
+                        color = Color.Transparent,
+                        shape = CircleShape
+                    ),
+                onClick = onClickAddButton,
+                containerColor = Color.Transparent,
+                contentColor = colorResource(R.color.gray_asparagus),
+                content = {
+                    Icon(
+                        painter = painterResource(R.drawable.add2),
+                        contentDescription = null
+                    )
                 }
             )
         }
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(color = colorResource(R.color.ivory))
+                .padding(it)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                HorizontalDivider()
 
-        if(isShowExitDialog) {
-            CheckDialog(
-                title = stringResource(R.string.delete_dialog_title),
-                description = stringResource(R.string.exit_dialog_description),
-                leftButton = stringResource(R.string.ok),
-                onClickCancel = { isShowExitDialog = false },
-                onClickConfirm = { (context as Activity).finish() }
-            )
+                AccountInfoArea(
+                    totalIncome = totalIncome,
+                    totalExpend = totalExpend
+                )
+
+                HorizontalDivider()
+
+                AccountContentArea(
+                    modifier = Modifier.weight(1f),
+                    accountOfDateGroup = accountOfDateGroup,
+                    callBackShowDialogState = { isShowCheckDeleteDialog = true },
+                    callBackAccountItem = { updateAccountItem = it },
+                    onClickAccountItem = onClickAccountItem
+                )
+            }
+
+            if(isShowCheckDeleteDialog) {
+                CheckDialog(
+                    title = stringResource(R.string.delete_dialog_title),
+                    description = stringResource(R.string.delete_dialog_description),
+                    onClickCancel = {
+                        isShowCheckDeleteDialog = false
+                    },
+                    onClickConfirm = {
+                        accountViewModel.deleteAccountItem(updateAccountItem!!)
+                        isShowCheckDeleteDialog = false
+                    }
+                )
+            }
+
+            if(isShowExitDialog) {
+                CheckDialog(
+                    title = stringResource(R.string.delete_dialog_title),
+                    description = stringResource(R.string.exit_dialog_description),
+                    leftButton = stringResource(R.string.ok),
+                    onClickCancel = { isShowExitDialog = false },
+                    onClickConfirm = { (context as Activity).finish() }
+                )
+            }
         }
     }
 }
@@ -174,6 +196,7 @@ private fun AccountTopBarArea(
             Icon(
                 painter = painterResource(R.drawable.before),
                 contentDescription = null,
+                tint = colorResource(R.color.black),
                 modifier = Modifier.roundRippleClickable(
                     rippleColor = colorResource(R.color.black),
                     onClick = decreaseMonth
@@ -196,6 +219,7 @@ private fun AccountTopBarArea(
             Icon(
                 painter = painterResource(R.drawable.next),
                 contentDescription = null,
+                tint = colorResource(R.color.black),
                 modifier = Modifier.roundRippleClickable(
                     rippleColor = colorResource(R.color.black),
                     onClick = increaseMonth
@@ -259,23 +283,6 @@ private fun InfoArea(
             fontSize = 15.sp
         )
     }
-}
-
-@Composable
-private fun AccountAddButton(
-    modifier: Modifier,
-    onClick: () -> Unit
-) {
-    Icon(
-        painter = painterResource(R.drawable.add2),
-        contentDescription = null,
-        tint = colorResource(R.color.gray_asparagus),
-        modifier = modifier
-            .size(40.dp)
-            .roundRippleClickable(
-                rippleColor = colorResource(R.color.gray_asparagus), onClick = onClick
-            )
-    )
 }
 
 @Composable
@@ -371,6 +378,10 @@ private fun AccountItemHeader(
     content: @Composable () -> Unit
 ) {
     var isExpanded by remember { mutableStateOf(true) }
+
+    LaunchedEffect(date) {
+        isExpanded = true
+    }
 
     Column(
         modifier = Modifier.headerModifier(),
