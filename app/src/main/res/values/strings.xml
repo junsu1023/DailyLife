@@ -70,4 +70,9 @@
     <string name="edit">편집</string>
     <string name="input_add_item">추가할 아이템을 입력하세요.</string>
     <string name="expenditure_info">지출 정보</string>
+
+    <!-- permission -->
+    <string name="permission_dialog_title">알림 권한 요청</string>
+    <string name="permission_dialog_description">설정에서 알림 권한을 켜야 합니다.</string>
+    <string name="move_settings_screen">이동</string>
 </resources>
